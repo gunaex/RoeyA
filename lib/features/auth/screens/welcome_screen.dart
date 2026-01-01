@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
@@ -22,16 +23,30 @@ class WelcomeScreen extends StatelessWidget {
               
               // App Logo/Icon
               Container(
-                width: 120,
-                height: 120,
+                width: 140,
+                height: 140,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(30),
+                  color: const Color(0xFFF5F1E8),
+                  borderRadius: BorderRadius.circular(35),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Icon(
-                  Icons.account_balance_wallet,
-                  size: 60,
-                  color: AppColors.textInverse,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(35),
+                  child: SvgPicture.asset(
+                    'assets/images/logo.svg',
+                    width: 140,
+                    height: 140,
+                    fit: BoxFit.cover,
+                    placeholderBuilder: (context) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
                 ),
               ),
               

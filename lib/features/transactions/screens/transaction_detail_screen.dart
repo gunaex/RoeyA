@@ -34,6 +34,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _aiAdvisor.initialize();
     _loadTransaction();
   }
 

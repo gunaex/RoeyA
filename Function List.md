@@ -1,6 +1,6 @@
 # RoeyA - Function List & Properties Documentation
 
-**Version:** 1.0.0  
+**Version:** 1.3.0  
 **Last Updated:** January 2025  
 **Platform:** Flutter (Android/iOS)
 
@@ -357,9 +357,100 @@
 
 ---
 
-### 6. Settings
+### 6. Budget Management
 
-#### 6.1 Settings Screen (`SettingsScreen`)
+#### 6.1 Budgets Screen (`BudgetsScreen`)
+- **Route:** `/budgets`
+- **Purpose:** Set and manage monthly budgets by category
+- **Features:**
+  - View budgets for selected month
+  - Month navigation (previous/next)
+  - Add budget for expense category
+  - View budget vs actual spending
+  - Progress indicators (green/yellow/red)
+  - Delete budget
+  - Budget usage percentage
+- **Properties:**
+  - `_year` (int) - Selected year
+  - `_month` (int) - Selected month
+  - `_budgets` (List<Budget>) - Budget list
+  - `_actuals` (Map<String, double>) - Actual spending by category
+  - `_isLoading` (bool)
+- **Functions:**
+  - `_load()` - Load budgets and actual spending
+  - `_showAddBudgetDialog()` - Add/edit budget dialog
+  - `_deleteBudget()` - Delete budget
+  - `_buildBudgetCard()` - Budget display card with progress
+
+---
+
+### 7. Search & Filter
+
+#### 7.1 Search Transactions Screen (`SearchTransactionsScreen`)
+- **Route:** `/search-transactions`
+- **Purpose:** Advanced search and filter for transactions
+- **Features:**
+  - Text search (description, note, category)
+  - Filter by transaction type (income/expense)
+  - Filter by category
+  - Filter by account
+  - Date range filter (from/to)
+  - Amount range filter (min/max)
+  - Real-time search results
+  - Clear filters
+  - Navigate to transaction detail
+- **Properties:**
+  - `_searchController` (TextEditingController)
+  - `_results` (List<Transaction>)
+  - `_isLoading` (bool)
+  - `_showFilters` (bool)
+  - `_selectedCategory` (String?)
+  - `_selectedAccountId` (String?)
+  - `_fromDate` (DateTime?)
+  - `_toDate` (DateTime?)
+  - `_minAmountController` (TextEditingController)
+  - `_maxAmountController` (TextEditingController)
+  - `_selectedType` (String?)
+- **Functions:**
+  - `_performSearch()` - Execute search with filters
+  - `_onSearchChanged()` - Search text change handler
+  - `_clearFilters()` - Reset all filters
+  - `_selectDate()` - Date picker
+
+---
+
+### 8. Financial Planning
+
+#### 8.1 Scenario Simulator Screen (`ScenarioSimulatorScreen`)
+- **Route:** `/scenario-simulator`
+- **Purpose:** AI-powered financial scenario simulation
+- **Features:**
+  - Load current monthly income/expense
+  - Set target savings goal
+  - Configure category reductions (percentage)
+  - AI feasibility analysis
+  - Step-by-step improvement plan
+  - Multi-language support (EN/TH)
+- **Properties:**
+  - `_incomeController` (TextEditingController)
+  - `_expenseController` (TextEditingController)
+  - `_targetSavingController` (TextEditingController)
+  - `_categoryReductions` (Map<String, double>) - Category -> reduction %
+  - `_simulationResult` (String?) - AI-generated analysis
+  - `_isLoading` (bool)
+  - `_isLoadingData` (bool)
+  - `_year` (int)
+  - `_month` (int)
+- **Functions:**
+  - `_loadCurrentData()` - Load current month data
+  - `_simulate()` - Run scenario simulation
+  - `_showCategoryReductionDialog()` - Add category reduction
+
+---
+
+### 9. Settings
+
+#### 9.1 Settings Screen (`SettingsScreen`)
 - **Route:** `/settings`
 - **Purpose:** App configuration and settings
 - **Features:**
@@ -475,6 +566,36 @@
     - `expenseCategories` (Map<String, double>) - Expense breakdown
     - `language` (String) - 'en' or 'th'
   - Returns: `String?` - AI-generated suggestions
+- `generateCategoryInsight()` - Generate AI insight for specific category
+  - Parameters:
+    - `category` (String) - Category name
+    - `total` (double) - Category total
+    - `history` (Map<DateTime, double>) - Category history
+    - `language` (String) - 'en' or 'th'
+  - Returns: `String?` - AI-generated insight
+- `generateTransactionInsight()` - Generate AI insight for single transaction
+  - Parameters:
+    - `description` (String) - Transaction description
+    - `amount` (double) - Transaction amount
+    - `category` (String?) - Category
+    - `accountName` (String?) - Account name
+    - `date` (DateTime) - Transaction date
+    - `type` (String) - 'income' or 'expense'
+    - `language` (String) - 'en' or 'th'
+  - Returns: `String?` - AI-generated insight
+- `simulateScenario()` - Simulate financial scenario with goals
+  - Parameters:
+    - `currentIncome` (double) - Current monthly income
+    - `currentExpense` (double) - Current monthly expense
+    - `targetSaving` (double?) - Target savings goal (optional)
+    - `categoryReductions` (Map<String, double>?) - Category reduction percentages
+    - `language` (String) - 'en' or 'th'
+  - Returns: `String?` - AI-generated feasibility analysis and plan
+- `generateOutlierInsight()` - Generate AI insight for outlier transactions
+  - Parameters:
+    - `outliers` (List<Map<String, dynamic>>) - Outlier transactions
+    - `language` (String) - 'en' or 'th'
+  - Returns: `String?` - AI-generated insight
 - `_buildEnglishPrompt()` - Build English prompt
 - `_buildThaiPrompt()` - Build Thai prompt
 
@@ -600,10 +721,51 @@
   - Returns: `List<Map<String, dynamic>>` - Category breakdown
 - `getRecentTransactions({int limit})` - Get recent transactions
   - Returns: `List<Transaction>`
+- `searchTransactions()` - Advanced transaction search with filters
+  - Parameters:
+    - `query` (String?) - Text search (description, note, category)
+    - `category` (String?) - Filter by category
+    - `accountId` (String?) - Filter by account
+    - `from` (DateTime?) - Start date
+    - `to` (DateTime?) - End date
+    - `minAmount` (double?) - Minimum amount
+    - `maxAmount` (double?) - Maximum amount
+    - `type` (String?) - 'income' or 'expense'
+  - Returns: `List<Transaction>` - Filtered transactions
+- `getCategoryHistory(String category, int months)` - Get category spending history
+  - Returns: `Map<DateTime, double>` - Monthly totals
+- `getOutlierTransactions(int year, int month, {double threshold})` - Detect outlier transactions
+  - Returns: `List<Transaction>` - Transactions exceeding threshold
 
 ---
 
-### 2. Account Repository (`AccountRepository`)
+### 2. Budget Repository (`BudgetRepository`)
+**Location:** `lib/data/repositories/budget_repository.dart`
+
+**Purpose:** Database operations for budgets
+
+**Properties:**
+- `_dbHelper` (DatabaseHelper) - Database helper instance
+
+**Functions:**
+- `upsertBudget(Budget budget)` - Insert or update budget
+  - Returns: `String` - Budget ID
+- `getBudget(int year, int month, String? category)` - Get specific budget
+  - Returns: `Budget?`
+- `getBudgetsForMonth(int year, int month)` - Get all budgets for month
+  - Returns: `List<Budget>`
+- `getCategoryBudgets(int year, int month)` - Get category budgets only
+  - Returns: `List<Budget>`
+- `deleteBudget(String id)` - Delete budget
+  - Returns: `int` - Rows affected
+- `deleteBudgetsForMonth(int year, int month)` - Delete all budgets for month
+  - Returns: `int` - Rows affected
+- `getAllBudgets()` - Get all budgets
+  - Returns: `List<Budget>`
+
+---
+
+### 3. Account Repository (`AccountRepository`)
 **Location:** `lib/data/repositories/account_repository.dart`
 
 **Purpose:** Database operations for accounts
@@ -731,6 +893,26 @@
 - `referenceNo` (String?) - Reference number
 - `transactionTime` (String?) - Transaction time
 - `qrData` (String?) - Raw QR code data
+
+---
+
+### 6. Budget Model (`Budget`)
+**Location:** `lib/data/models/budget.dart`
+
+**Properties:**
+- `id` (String) - Unique budget ID (UUID)
+- `year` (int) - Budget year
+- `month` (int) - Budget month (1-12)
+- `category` (String?) - Expense category (null for overall budget)
+- `amount` (double) - Budget amount
+- `currencyCode` (String) - Currency code
+- `createdAt` (DateTime) - Creation timestamp
+- `updatedAt` (DateTime) - Last update timestamp
+
+**Functions:**
+- `toMap()` - Convert to Map for database
+- `fromMap(Map)` - Create from database Map
+- `copyWith()` - Create copy with modified fields
 
 ---
 
@@ -919,6 +1101,9 @@
 - `/bulk-import-ocr` - Bulk Import OCR Screen
 - `/qr-scanner` - QR Scanner Screen
 - `/reports` - Reports Screen
+- `/budgets` - Budgets Screen
+- `/search-transactions` - Search Transactions Screen
+- `/scenario-simulator` - Scenario Simulator Screen
 
 ---
 
@@ -989,6 +1174,45 @@ CREATE TABLE currency_rates (
 
 ---
 
+### Budgets Table
+```sql
+CREATE TABLE budgets (
+  id TEXT PRIMARY KEY,
+  year INTEGER NOT NULL,
+  month INTEGER NOT NULL,
+  category TEXT,
+  amount REAL NOT NULL,
+  currency_code TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+)
+```
+
+**Indexes:**
+- Composite index on `year`, `month`, `category` (for efficient lookups)
+
+---
+
+### Transaction Templates Table
+```sql
+CREATE TABLE transaction_templates (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  category TEXT,
+  account_id TEXT,
+  amount REAL NOT NULL,
+  currency_code TEXT NOT NULL,
+  note TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (account_id) REFERENCES accounts (id)
+)
+```
+
+**Note:** Transaction templates are stored but UI implementation may be pending.
+
+---
+
 ## Key Features Summary
 
 ### ✅ Implemented Features
@@ -1056,6 +1280,27 @@ CREATE TABLE currency_rates (
    - Email change
    - Privacy policy
    - Terms of use
+
+9. **Budget Management** (Version 1.3)
+   - Monthly budget setting by category
+   - Budget vs actual tracking
+   - Visual progress indicators
+   - Budget usage percentage
+   - Month navigation
+
+10. **Advanced Search** (Version 1.3)
+    - Full-text search
+    - Multiple filter options
+    - Date range filtering
+    - Amount range filtering
+    - Real-time results
+
+11. **AI Scenario Planning** (Version 1.3)
+    - Financial scenario simulation
+    - Target savings goals
+    - Category reduction planning
+    - AI feasibility analysis
+    - Step-by-step improvement plans
 
 ---
 
@@ -1278,6 +1523,100 @@ Reports Screen → Load Monthly Data → Build Prompt → Gemini API → Parse R
 - Widget tests for UI components
 - Integration tests for flows
 - Manual testing checklist available
+
+---
+
+---
+
+## Version History
+
+### Version 1.3.0 (January 2025) - Budget Management & Advanced Features
+
+**New Features:**
+- ✅ **Budget Management System**
+  - Set monthly budgets by expense category
+  - Track budget vs actual spending
+  - Visual progress indicators (green/yellow/red)
+  - Budget usage percentage display
+  - Month navigation for budget history
+  
+- ✅ **Advanced Transaction Search**
+  - Full-text search (description, note, category)
+  - Multiple filter options (type, category, account, date range, amount range)
+  - Real-time search results
+  - Filter panel with clear option
+  
+- ✅ **AI Scenario Simulator**
+  - Financial scenario planning with AI
+  - Set target savings goals
+  - Configure category reductions (percentage-based)
+  - AI-powered feasibility analysis
+  - Step-by-step improvement plans
+  - Multi-language support (EN/TH)
+
+**Enhanced Features:**
+- ✅ **AI Financial Advisor Enhancements**
+  - Category-specific insights
+  - Transaction-level insights
+  - Outlier transaction detection and analysis
+  - Scenario simulation with custom goals
+  
+- ✅ **Reports Screen Enhancements**
+  - Budget integration in reports
+  - Category insights per budget
+  - Outlier transaction detection
+  - Enhanced AI recommendations
+
+**Database Changes:**
+- Added `budgets` table (version 2)
+- Added `transaction_templates` table (version 2)
+- Database version upgraded to 2
+
+**New Routes:**
+- `/budgets` - Budgets Screen
+- `/search-transactions` - Search Transactions Screen
+- `/scenario-simulator` - Scenario Simulator Screen
+
+**New Models:**
+- `Budget` model for budget management
+
+**New Repositories:**
+- `BudgetRepository` for budget operations
+
+**New Repository Methods:**
+- `TransactionRepository.searchTransactions()` - Advanced search
+- `TransactionRepository.getCategoryHistory()` - Category trends
+- `TransactionRepository.getOutlierTransactions()` - Anomaly detection
+
+**New AI Service Methods:**
+- `AiFinancialAdvisorService.generateCategoryInsight()` - Category analysis
+- `AiFinancialAdvisorService.generateTransactionInsight()` - Transaction analysis
+- `AiFinancialAdvisorService.simulateScenario()` - Scenario planning
+- `AiFinancialAdvisorService.generateOutlierInsight()` - Outlier analysis
+
+---
+
+### Version 1.0.0 (Initial Release)
+
+**Features:**
+- Complete authentication flow
+- PDPA consent management
+- Multi-language support (EN/TH)
+- Multi-currency support (8 currencies)
+- Account management (5 categories)
+- Transaction management
+- Dashboard with net worth
+- Settings screen
+- Offline-first architecture
+- AI service integration (Gemini)
+- PIN security with lockout
+- Recovery email system
+- Earth-tone design system
+- Responsive UI
+- OCR slip scanning
+- QR code scanning
+- Transaction map with GPS
+- Monthly reports with charts
 
 ---
 

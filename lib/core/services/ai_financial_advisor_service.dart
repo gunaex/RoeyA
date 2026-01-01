@@ -337,6 +337,8 @@ Keep response concise, 80-120 words. No markdown, just plain text.
     required double currentIncome,
     required double currentExpense,
     required double? targetSaving,
+    double? targetPurchaseAmount,
+    int? timeframeMonths,
     required Map<String, double>? categoryReductions,
     required String language,
   }) async {
@@ -347,6 +349,23 @@ Keep response concise, 80-120 words. No markdown, just plain text.
           .map((e) => '${e.key}: reduce by ${e.value.toStringAsFixed(1)}%')
           .join(', ') ?? 'None';
 
+      // Build goal description
+      String goalDescription = '';
+      if (targetPurchaseAmount != null && timeframeMonths != null) {
+        final monthlyNeeded = targetPurchaseAmount / timeframeMonths;
+        goalDescription = language == 'th' 
+          ? '- **เป้าหมายการซื้อ:** ${targetPurchaseAmount.toStringAsFixed(2)} THB ภายใน ${timeframeMonths} เดือน\n'
+            '- **ต้องออมรายเดือน:** ${monthlyNeeded.toStringAsFixed(2)} THB/เดือน\n'
+            '- **คำถาม:** จะทำอย่างไรให้ได้เงินจำนวนนี้เร็วที่สุด?\n'
+          : '- **Purchase Goal:** ${targetPurchaseAmount.toStringAsFixed(2)} THB within ${timeframeMonths} months\n'
+            '- **Monthly Saving Needed:** ${monthlyNeeded.toStringAsFixed(2)} THB/month\n'
+            '- **Question:** How can I achieve this fastest?\n';
+      } else if (targetSaving != null) {
+        goalDescription = language == 'th'
+          ? '- เป้าหมายการออม: ${targetSaving.toStringAsFixed(2)} THB/เดือน\n'
+          : '- Target Saving: ${targetSaving.toStringAsFixed(2)} THB/month\n';
+      }
+
       final prompt = language == 'th' ? '''
 คุณเป็นที่ปรึกษาทางการเงิน AI จำลองสถานการณ์ทางการเงิน:
 
@@ -356,19 +375,20 @@ Keep response concise, 80-120 words. No markdown, just plain text.
 - ยอดคงเหลือสุทธิ: ${(currentIncome - currentExpense).toStringAsFixed(2)} THB
 
 **เป้าหมาย:**
-${targetSaving != null ? '- เป้าหมายการออม: ${targetSaving.toStringAsFixed(2)} THB/เดือน' : '- ไม่มีเป้าหมายการออมเฉพาะ'}
+${goalDescription.isNotEmpty ? goalDescription : '- ไม่มีเป้าหมายการออมเฉพาะ'}
 ${categoryReductions != null && categoryReductions.isNotEmpty ? '- ลดค่าใช้จ่ายตามหมวดหมู่:\n$reductionSummary' : ''}
 
 **งานของคุณ:**
 วิเคราะห์ความเป็นไปได้และสร้างแผนการ:
 1. สรุปความเป็นไปได้ (ทำได้/ทำได้แต่ยาก/ทำไม่ได้)
 2. แผนการปรับปรุงแบบทีละขั้นตอน:
-   - ปรับอะไรบ้าง
+   - ปรับอะไรบ้าง (เพิ่มรายได้/ลดค่าใช้จ่าย/ทั้งสองอย่าง)
    - ปรับเท่าไหร่
    - ระยะเวลาเท่าไหร่
-3. คำแนะนำเพิ่มเติม
+   ${targetPurchaseAmount != null ? '- วิธีที่เร็วที่สุดในการได้เงินจำนวนนี้:' : ''}
+3. คำแนะนำเพิ่มเติม (เช่น หารายได้เสริม, ลดค่าใช้จ่ายที่ไม่จำเป็น, ลงทุน)
 
-ให้คำตอบเป็นข้อความโครงสร้างชัดเจน ประมาณ 200-250 คำ
+ให้คำตอบเป็นข้อความโครงสร้างชัดเจน ประมาณ 250-300 คำ
 ''' : '''
 You are a financial advisor AI. Simulate this financial scenario:
 
@@ -378,19 +398,20 @@ You are a financial advisor AI. Simulate this financial scenario:
 - Net Balance: ${(currentIncome - currentExpense).toStringAsFixed(2)} THB
 
 **Goals:**
-${targetSaving != null ? '- Target Saving: ${targetSaving.toStringAsFixed(2)} THB/month' : '- No specific saving target'}
+${goalDescription.isNotEmpty ? goalDescription : '- No specific saving target'}
 ${categoryReductions != null && categoryReductions.isNotEmpty ? '- Category Reductions:\n$reductionSummary' : ''}
 
 **Your Task:**
 Analyze feasibility and create an action plan:
 1. Feasibility summary (Achievable/Challenging but possible/Not achievable)
 2. Step-by-step improvement plan:
-   - What to adjust
+   - What to adjust (increase income/reduce expenses/both)
    - How much to adjust
    - Timeline
-3. Additional recommendations
+   ${targetPurchaseAmount != null ? '- Fastest way to achieve this amount:' : ''}
+3. Additional recommendations (e.g., side income, cut unnecessary expenses, investments)
 
-Provide structured response, 200-250 words.
+Provide structured response, 250-300 words.
 ''';
 
       final content = [Content.text(prompt)];

@@ -7,6 +7,8 @@ import 'package:roeyp/features/auth/screens/pin_lock_screen.dart';
 import 'package:roeyp/features/auth/screens/recovery_email_screen.dart';
 import 'package:roeyp/features/auth/screens/welcome_screen.dart';
 import 'package:roeyp/features/auth/screens/forgot_pin_screen.dart';
+import 'package:roeyp/features/auth/screens/change_pin_screen.dart';
+import 'package:roeyp/features/auth/screens/change_email_screen.dart';
 import 'package:roeyp/features/consent/screens/consent_screen.dart';
 import 'package:roeyp/features/dashboard/screens/dashboard_screen.dart';
 import 'package:roeyp/features/map/screens/transaction_map_screen.dart';
@@ -102,6 +104,12 @@ class AppRoutes {
       
       case AppConstants.routeScenarioSimulator:
         return MaterialPageRoute(builder: (_) => const ScenarioSimulatorScreen());
+      
+      case AppConstants.routeChangePin:
+        return MaterialPageRoute(builder: (_) => const ChangePinScreen());
+      
+      case AppConstants.routeChangeEmail:
+        return MaterialPageRoute(builder: (_) => const ChangeEmailScreen());
       
       default:
         return MaterialPageRoute(

@@ -67,11 +67,20 @@ class AppLocalizations {
   String get pinMismatch => translate('pin_mismatch');
   String get forgotPin => translate('forgot_pin');
   String get changePin => translate('change_pin');
+  String get enterCurrentPin => translate('enter_current_pin');
+  String get createNewPin => translate('create_new_pin');
+  String get confirmNewPin => translate('confirm_new_pin');
+  String get incorrectPin => translate('incorrect_pin');
+  String get pinChangedSuccessfully => translate('pin_changed_successfully');
+  String get enterCurrentPinToContinue => translate('enter_current_pin_to_continue');
+  String get createNewPinDescription => translate('create_new_pin_description');
+  String get confirmNewPinDescription => translate('confirm_new_pin_description');
   
   // Recovery Email
   String get recoveryEmail => translate('recovery_email');
   String get enterRecoveryEmail => translate('enter_recovery_email');
   String get recoveryEmailHint => translate('recovery_email_hint');
+  String get changeRecoveryEmail => translate('change_recovery_email');
   
   // Dashboard
   String get dashboard => translate('dashboard');
@@ -265,6 +274,10 @@ class AppLocalizations {
   // Scenario Simulation
   String get scenarioSimulation => translate('scenario_simulation');
   String get simulateScenario => translate('simulate_scenario');
+  String get targetPurchaseAmount => translate('target_purchase_amount');
+  String get timeframeMonths => translate('timeframe_months');
+  String get purchaseGoal => translate('purchase_goal');
+  String get savingGoal => translate('saving_goal');
   String get currentIncome => translate('current_income');
   String get currentExpense => translate('current_expense');
   String get targetSaving => translate('target_saving');
@@ -277,6 +290,46 @@ class AppLocalizations {
   String get unusualTransactions => translate('unusual_transactions');
   String get outlierTransactions => translate('outlier_transactions');
   String get askAiAboutThis => translate('ask_ai_about_this');
+  
+  // Backup & Export
+  String get backup => translate('backup');
+  String get exportBackup => translate('export_backup');
+  String get importBackup => translate('import_backup');
+  String get exportBackupDesc => translate('export_backup_desc');
+  String get importBackupDesc => translate('import_backup_desc');
+  String get export => translate('export');
+  String get import => translate('import');
+  String get exportCsv => translate('export_csv');
+  String get exportTransactions => translate('export_transactions');
+  String get backupSuccess => translate('backup_success');
+  String get backupFailed => translate('backup_failed');
+  String get importSuccess => translate('import_success');
+  String get importFailed => translate('import_failed');
+  String get exportSuccess => translate('export_success');
+  String get exportFailed => translate('export_failed');
+  String get confirmImport => translate('confirm_import');
+  String get importWarning => translate('import_warning');
+  String get savedViews => translate('saved_views');
+  String get saveAsView => translate('save_as_view');
+  String get selectSavedView => translate('select_saved_view');
+  String get viewName => translate('view_name');
+  String get createView => translate('create_view');
+  String get deleteView => translate('delete_view');
+  
+  // Location UX
+  String get useCurrentLocation => translate('use_current_location');
+  String get pickOnMap => translate('pick_on_map');
+  String get noLocation => translate('no_location');
+  String get changeLocation => translate('change_location');
+  
+  // Map Timeline
+  String get dateRangeFilter => translate('date_range_filter');
+  String get timeSlider => translate('time_slider');
+  
+  // Developer Note
+  String get developerNote => translate('developer_note');
+  String get developerNoteDesc => translate('developer_note_desc');
+  String get developerNoteMessage => translate('developer_note_message');
   
   // Helper method to get localized category name
   String getCategoryName(String categoryKey) {
@@ -317,11 +370,20 @@ const Map<String, String> _enUS = {
   'pin_mismatch': 'PINs do not match',
   'forgot_pin': 'Forgot PIN?',
   'change_pin': 'Change PIN',
+  'enter_current_pin': 'Enter Current PIN',
+  'create_new_pin': 'Create New PIN',
+  'confirm_new_pin': 'Confirm New PIN',
+  'incorrect_pin': 'Incorrect PIN',
+  'pin_changed_successfully': 'PIN changed successfully',
+  'enter_current_pin_to_continue': 'Enter your current PIN to continue',
+  'create_new_pin_description': 'Create a new 4-digit PIN',
+  'confirm_new_pin_description': 'Confirm your new PIN',
   
   // Recovery Email
   'recovery_email': 'Recovery Email',
   'enter_recovery_email': 'Enter your email for PIN recovery',
   'recovery_email_hint': 'Used only for PIN recovery',
+  'change_recovery_email': 'Change Recovery Email',
   
   // Common
   'save': 'Save',
@@ -475,6 +537,40 @@ const Map<String, String> _enUS = {
   'scan_slip_ocr': 'Scan Slip (OCR)',
   'scan_slip_ocr_desc': 'Auto-read slip with AI (free, no internet required)',
   'manual_entry_desc': 'Enter transaction details manually',
+  
+  // Backup & Export
+  'backup': 'Backup',
+  'export_backup': 'Export Backup',
+  'import_backup': 'Import Backup',
+  'export_backup_desc': 'Create encrypted backup file with PIN',
+  'import_backup_desc': 'Restore data from backup file',
+  'export': 'Export',
+  'import': 'Import',
+  'export_csv': 'Export CSV',
+  'export_transactions': 'Export Transactions',
+  'backup_success': 'Backup exported successfully',
+  'backup_failed': 'Backup export failed',
+  'import_success': 'Backup imported successfully',
+  'import_failed': 'Backup import failed',
+  'export_success': 'Export successful',
+  'export_failed': 'Export failed',
+  'confirm_import': 'Import Backup',
+  'import_warning': 'This action will replace all current data. Are you sure?',
+  
+  // Scenario Simulation
+  'scenario_simulation': 'Scenario Simulation',
+  'simulate_scenario': 'Simulate Scenario',
+  'target_purchase_amount': 'Target Purchase Amount',
+  'timeframe_months': 'Timeframe (Months)',
+  'purchase_goal': 'Purchase Goal',
+  'saving_goal': 'Saving Goal',
+  'current_income': 'Current Income',
+  'current_expense': 'Current Expense',
+  'target_saving': 'Target Saving',
+  'reduce_category': 'Reduce Category',
+  'reduction_percentage': 'Reduction Percentage',
+  'feasibility': 'Feasibility',
+  'action_plan': 'Action Plan',
 };
 
 // Thai
@@ -508,10 +604,21 @@ const Map<String, String> _thTH = {
   'forgot_pin': 'ลืมรหัส PIN?',
   'change_pin': 'เปลี่ยนรหัส PIN',
   
+  // PIN (additional)
+  'enter_current_pin': 'ใส่รหัส PIN ปัจจุบัน',
+  'create_new_pin': 'สร้างรหัส PIN ใหม่',
+  'confirm_new_pin': 'ยืนยันรหัส PIN ใหม่',
+  'incorrect_pin': 'รหัส PIN ไม่ถูกต้อง',
+  'pin_changed_successfully': 'เปลี่ยนรหัส PIN สำเร็จ',
+  'enter_current_pin_to_continue': 'ใส่รหัส PIN ปัจจุบันเพื่อดำเนินการต่อ',
+  'create_new_pin_description': 'สร้างรหัส PIN 4 หลักใหม่',
+  'confirm_new_pin_description': 'ยืนยันรหัส PIN ใหม่ของคุณ',
+  
   // Recovery Email
   'recovery_email': 'อีเมลสำหรับกู้คืน',
   'enter_recovery_email': 'ใส่อีเมลของคุณสำหรับกู้คืนรหัส PIN',
   'recovery_email_hint': 'ใช้สำหรับกู้คืนรหัส PIN เท่านั้น',
+  'change_recovery_email': 'เปลี่ยนอีเมลกู้คืน',
   
   // Common
   'save': 'บันทึก',
@@ -724,6 +831,10 @@ const Map<String, String> _thTH = {
   // Scenario Simulation
   'scenario_simulation': 'จำลองสถานการณ์',
   'simulate_scenario': 'จำลองสถานการณ์',
+  'target_purchase_amount': 'จำนวนเงินที่ต้องการซื้อ',
+  'timeframe_months': 'ระยะเวลา (เดือน)',
+  'purchase_goal': 'เป้าหมายการซื้อ',
+  'saving_goal': 'เป้าหมายการออม',
   'current_income': 'รายได้ปัจจุบัน',
   'current_expense': 'ค่าใช้จ่ายปัจจุบัน',
   'target_saving': 'เป้าหมายการออม',
@@ -736,6 +847,46 @@ const Map<String, String> _thTH = {
   'unusual_transactions': 'รายการผิดปกติ',
   'outlier_transactions': 'รายการที่ผิดปกติ',
   'ask_ai_about_this': 'ถาม AI เกี่ยวกับเรื่องนี้',
+  
+  // Backup & Export
+  'backup': 'สำรองข้อมูล',
+  'export_backup': 'ส่งออกสำรองข้อมูล',
+  'import_backup': 'นำเข้าสำรองข้อมูล',
+  'export_backup_desc': 'สร้างไฟล์สำรองข้อมูลที่เข้ารหัสด้วย PIN',
+  'import_backup_desc': 'กู้คืนข้อมูลจากไฟล์สำรอง',
+  'export': 'ส่งออก',
+  'import': 'นำเข้า',
+  'export_csv': 'ส่งออก CSV',
+  'export_transactions': 'ส่งออกรายการ',
+  'backup_success': 'ส่งออกสำรองข้อมูลสำเร็จ',
+  'backup_failed': 'ส่งออกสำรองข้อมูลล้มเหลว',
+  'import_success': 'นำเข้าสำรองข้อมูลสำเร็จ',
+  'import_failed': 'นำเข้าสำรองข้อมูลล้มเหลว',
+  'export_success': 'ส่งออกรายการสำเร็จ',
+  'export_failed': 'ส่งออกรายการล้มเหลว',
+  'confirm_import': 'นำเข้าสำรองข้อมูล',
+  'import_warning': 'การดำเนินการนี้จะแทนที่ข้อมูลปัจจุบันทั้งหมด คุณแน่ใจหรือไม่?',
+  'saved_views': 'มุมมองที่บันทึกไว้',
+  'save_as_view': 'บันทึกเป็นมุมมอง',
+  'select_saved_view': 'เลือกมุมมองที่บันทึกไว้',
+  'view_name': 'ชื่อมุมมอง',
+  'create_view': 'สร้างมุมมอง',
+  'delete_view': 'ลบมุมมอง',
+  
+  // Location UX
+  'use_current_location': 'ใช้ตำแหน่งปัจจุบัน',
+  'pick_on_map': 'เลือกบนแผนที่',
+  'no_location': 'ไม่มีตำแหน่ง',
+  'change_location': 'เปลี่ยนตำแหน่ง',
+  
+  // Map Timeline
+  'date_range_filter': 'ตัวกรองช่วงวันที่',
+  'time_slider': 'แถบเลื่อนเวลา',
+  
+  // Developer Note
+  'developer_note': 'หมายเหตุจากนักพัฒนา',
+  'developer_note_desc': 'เกี่ยวกับแอปนี้',
+  'developer_note_message': 'แอปพลิเคชันนี้สำหรับคนที่ไม่ต้องการจ่ายค่าสมาชิกเหมือนผม ผมทำแจกเอง I Am Kanphong T.',
 };
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

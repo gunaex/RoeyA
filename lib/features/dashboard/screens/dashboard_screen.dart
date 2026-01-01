@@ -89,31 +89,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.pushNamed(context, AppConstants.routeReports);
               },
             ),
-            // Online/Offline Indicator
+            // Online/Offline Indicator (icon only)
             Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      connectivity.isOnline
-                          ? Icons.cloud_done_outlined
-                          : Icons.cloud_off_outlined,
-                      size: 20,
-                      color: connectivity.isOnline
-                          ? AppColors.success
-                          : AppColors.textHint,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      connectivity.isOnline
-                          ? l10n.onlineMode
-                          : l10n.offlineMode,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Icon(
+                connectivity.isOnline
+                    ? Icons.cloud_done_outlined
+                    : Icons.cloud_off_outlined,
+                size: 20,
+                color: connectivity.isOnline
+                    ? AppColors.success
+                    : AppColors.textHint,
               ),
             ),
             

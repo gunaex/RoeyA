@@ -1,7 +1,7 @@
 class AppConstants {
   // App Info
   static const String appName = 'RoeyA';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.3.0';
   
   // Database
   static const String dbName = 'roeya.db';

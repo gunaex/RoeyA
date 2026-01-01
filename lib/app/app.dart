@@ -30,54 +30,28 @@ class _RoeyPAppState extends State<RoeyPApp> {
   }
 
   Future<void> _initialize() async {
-    // Initialize services
-    await SecureStorageService.instance.init();
-    await ConnectivityService.instance.init();
-    
-    // Initialize default accounts (if first time or no accounts exist)
-    final accountRepo = AccountRepository();
-    await accountRepo.createDefaultAccountsIfNeeded();
-    
-    // Check for shortcut action
-    String? shortcutAction;
     try {
-      final result = await _shortcutChannel.invokeMethod<String>('getInitialAction');
-      shortcutAction = result;
-    } catch (e) {
-      // Method channel not available or no shortcut action
-      print('Shortcut check: $e');
-    }
-    
-    // Determine initial route
-    final isFirstLaunch = await SecureStorageService.instance.isFirstLaunch();
-    
-    if (shortcutAction != null && !isFirstLaunch) {
-      // Handle shortcut actions (only if app is already set up)
-      final hasConsented = await SecureStorageService.instance.hasConsented();
-      final hasPin = await SecureStorageService.instance.getPin();
+      // Initialize critical services
+      await SecureStorageService.instance.init();
+      await ConnectivityService.instance.init();
       
-      if (hasConsented && hasPin != null) {
-        // App is set up, handle shortcut
-        switch (shortcutAction) {
-          case 'quickScan':
-            _initialRoute = AppConstants.routeScanSlip;
-            break;
-          case 'quickAddExpense':
-            _initialRoute = AppConstants.routeManualEntry;
-            break;
-          default:
-            _initialRoute = await _getDefaultRoute(isFirstLaunch);
-        }
-      } else {
-        _initialRoute = await _getDefaultRoute(isFirstLaunch);
-      }
-    } else {
+      // Initialize default accounts (non-blocking)
+      final accountRepo = AccountRepository();
+      await accountRepo.createDefaultAccountsIfNeeded();
+      
+      // Determine initial route
+      final isFirstLaunch = await SecureStorageService.instance.isFirstLaunch();
       _initialRoute = await _getDefaultRoute(isFirstLaunch);
+    } catch (e) {
+      debugPrint('App init error: $e');
+      _initialRoute = AppConstants.routeWelcome;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isInitializing = false;
+        });
+      }
     }
-    
-    setState(() {
-      _isInitializing = false;
-    });
   }
 
   Future<String> _getDefaultRoute(bool isFirstLaunch) async {

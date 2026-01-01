@@ -44,7 +44,7 @@ dependencies:
   
   # Image Picker & Camera
   image_picker: ^1.0.7
-  file_picker: ^8.0.0  # Bypasses Android 13+ Photo Picker to preserve EXIF GPS
+  file_picker: ^8.1.4  # V2 embedding compatible with Flutter 3.22+
   path_provider: ^2.1.2
   
   # Image Processing
@@ -63,6 +63,12 @@ dependencies:
   # Utilities
   uuid: ^4.3.3
   shared_preferences: ^2.2.2
+  
+  # Crypto for backup encryption
+  cryptography: ^2.7.0
+  
+  # File sharing
+  share_plus: ^7.2.1
   
   # Permissions
   permission_handler: ^11.3.1

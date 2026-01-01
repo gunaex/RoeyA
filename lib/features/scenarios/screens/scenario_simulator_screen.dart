@@ -23,6 +23,8 @@ class _ScenarioSimulatorScreenState extends State<ScenarioSimulatorScreen> {
   final _incomeController = TextEditingController();
   final _expenseController = TextEditingController();
   final _targetSavingController = TextEditingController();
+  final _targetAmountController = TextEditingController(); // New: Target purchase amount
+  final _timeframeController = TextEditingController(); // New: Timeframe in months
   
   Map<String, double> _categoryReductions = {}; // category -> percentage
   String? _simulationResult;
@@ -30,6 +32,7 @@ class _ScenarioSimulatorScreenState extends State<ScenarioSimulatorScreen> {
   bool _isLoadingData = true;
   int _year = DateTime.now().year;
   int _month = DateTime.now().month;
+  String _simulationType = 'saving'; // 'saving' or 'purchase'
 
   @override
   void initState() {
@@ -42,6 +45,8 @@ class _ScenarioSimulatorScreenState extends State<ScenarioSimulatorScreen> {
     _incomeController.dispose();
     _expenseController.dispose();
     _targetSavingController.dispose();
+    _targetAmountController.dispose();
+    _timeframeController.dispose();
     super.dispose();
   }
 
@@ -78,6 +83,12 @@ class _ScenarioSimulatorScreenState extends State<ScenarioSimulatorScreen> {
       final targetSaving = _targetSavingController.text.isNotEmpty
           ? double.tryParse(_targetSavingController.text)
           : null;
+      final targetAmount = _targetAmountController.text.isNotEmpty
+          ? double.tryParse(_targetAmountController.text)
+          : null;
+      final timeframe = _timeframeController.text.isNotEmpty
+          ? int.tryParse(_timeframeController.text)
+          : null;
       
       final categoryReductions = _categoryReductions.isNotEmpty
           ? _categoryReductions
@@ -90,6 +101,8 @@ class _ScenarioSimulatorScreenState extends State<ScenarioSimulatorScreen> {
         currentIncome: income,
         currentExpense: expense,
         targetSaving: targetSaving,
+        targetPurchaseAmount: targetAmount,
+        timeframeMonths: timeframe,
         categoryReductions: categoryReductions,
         language: language,
       );
@@ -264,15 +277,78 @@ class _ScenarioSimulatorScreenState extends State<ScenarioSimulatorScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: _targetSavingController,
-                      label: l10n.targetSaving,
-                      hint: 'Optional',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      prefixIcon: const Icon(Icons.savings_outlined),
-                      inputFormatters: [DecimalTextInputFormatter(decimalPlaces: 2)],
+                    // Simulation Type Toggle
+                    SegmentedButton<String>(
+                      segments: [
+                        ButtonSegment(value: 'saving', label: Text(l10n.savingGoal), icon: const Icon(Icons.savings_outlined)),
+                        ButtonSegment(value: 'purchase', label: Text(l10n.purchaseGoal), icon: const Icon(Icons.shopping_bag_outlined)),
+                      ],
+                      selected: {_simulationType},
+                      onSelectionChanged: (Set<String> newSelection) {
+                        setState(() {
+                          _simulationType = newSelection.first;
+                          if (_simulationType == 'saving') {
+                            _targetAmountController.clear();
+                            _timeframeController.clear();
+                          } else {
+                            _targetSavingController.clear();
+                          }
+                        });
+                      },
                     ),
+                    const SizedBox(height: 16),
+                    
+                    // Conditional inputs based on simulation type
+                    if (_simulationType == 'saving') ...[
+                      AppTextField(
+                        controller: _targetSavingController,
+                        label: l10n.targetSaving,
+                        hint: 'Optional - Monthly saving target',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        prefixIcon: const Icon(Icons.savings_outlined),
+                        inputFormatters: [DecimalTextInputFormatter(decimalPlaces: 2)],
+                      ),
+                    ] else ...[
+                      AppTextField(
+                        controller: _targetAmountController,
+                        label: l10n.targetPurchaseAmount,
+                        hint: 'e.g., 100000',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        prefixIcon: const Icon(Icons.shopping_bag_outlined),
+                        inputFormatters: [DecimalTextInputFormatter(decimalPlaces: 2)],
+                        validator: (value) {
+                          if (value != null && value.isNotEmpty) {
+                            final amount = double.tryParse(value);
+                            if (amount == null || amount <= 0) {
+                              return 'Please enter a valid amount';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      AppTextField(
+                        controller: _timeframeController,
+                        label: l10n.timeframeMonths,
+                        hint: 'e.g., 6 (for 6 months)',
+                        keyboardType: TextInputType.number,
+                        prefixIcon: const Icon(Icons.calendar_today_outlined),
+                        validator: (value) {
+                          if (value != null && value.isNotEmpty) {
+                            final months = int.tryParse(value);
+                            if (months == null || months <= 0) {
+                              return 'Please enter valid months (1-120)';
+                            }
+                            if (months > 120) {
+                              return 'Maximum 120 months';
+                            }
+                          } else if (_targetAmountController.text.isNotEmpty) {
+                            return 'Timeframe required when target amount is set';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     if (_categoryReductions.isNotEmpty) ...[
                       Text(
