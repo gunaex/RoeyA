@@ -111,5 +111,6 @@ class AppConstants {
   static const String routeReports = '/reports';
   static const String routeBudgets = '/budgets';
   static const String routeSearchTransactions = '/search-transactions';
+  static const String routeScenarioSimulator = '/scenario-simulator';
 }
 

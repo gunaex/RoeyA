@@ -234,4 +234,90 @@ class TransactionRepository {
     
     return maps.map((map) => model.Transaction.fromMap(map)).toList();
   }
+
+  /// Get category history for the last N months (for AI insights)
+  Future<Map<DateTime, double>> getCategoryHistory(String category, int months) async {
+    final db = await _dbHelper.database;
+    final now = DateTime.now();
+    final startDate = DateTime(now.year, now.month - months + 1, 1);
+    
+    final maps = await db.rawQuery('''
+      SELECT 
+        strftime('%Y-%m', transaction_date) as month,
+        SUM(amount) as total
+      FROM transactions
+      WHERE category = ?
+        AND is_deleted = 0
+        AND transaction_date >= ?
+      GROUP BY strftime('%Y-%m', transaction_date)
+      ORDER BY month ASC
+    ''', [category, startDate.toIso8601String()]);
+    
+    final history = <DateTime, double>{};
+    for (var map in maps) {
+      final monthStr = map['month'] as String;
+      final parts = monthStr.split('-');
+      if (parts.length == 2) {
+        final year = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final total = (map['total'] as num?)?.toDouble() ?? 0.0;
+        history[DateTime(year, month, 1)] = total;
+      }
+    }
+    
+    return history;
+  }
+
+  /// Get outlier transactions (anomaly detection)
+  /// Flags transactions that are > threshold (default 3x) the average for their category
+  Future<List<model.Transaction>> getOutlierTransactions(int year, int month, {double threshold = 3.0}) async {
+    final db = await _dbHelper.database;
+    final startDate = DateTime(year, month, 1);
+    final endDate = DateTime(year, month + 1, 0, 23, 59, 59);
+    
+    // First, get average amounts per category
+    final avgMaps = await db.rawQuery('''
+      SELECT 
+        category,
+        AVG(amount) as avg_amount,
+        COUNT(*) as count
+      FROM transactions
+      WHERE is_deleted = 0
+        AND category IS NOT NULL
+        AND transaction_date BETWEEN ? AND ?
+      GROUP BY category
+      HAVING count >= 3
+    ''', [startDate.toIso8601String(), endDate.toIso8601String()]);
+    
+    final categoryAverages = <String, double>{};
+    for (var map in avgMaps) {
+      final category = map['category'] as String;
+      final avg = (map['avg_amount'] as num?)?.toDouble() ?? 0.0;
+      if (category != null && avg > 0) {
+        categoryAverages[category] = avg;
+      }
+    }
+    
+    if (categoryAverages.isEmpty) return [];
+    
+    // Get all transactions for the month
+    final allTransactions = await db.query(
+      'transactions',
+      where: 'is_deleted = 0 AND category IS NOT NULL AND transaction_date BETWEEN ? AND ?',
+      whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
+    );
+    
+    final outliers = <model.Transaction>[];
+    for (var map in allTransactions) {
+      final tx = model.Transaction.fromMap(map);
+      if (tx.category != null && categoryAverages.containsKey(tx.category)) {
+        final avg = categoryAverages[tx.category]!;
+        if (tx.amount > avg * threshold) {
+          outliers.add(tx);
+        }
+      }
+    }
+    
+    return outliers;
+  }
 }

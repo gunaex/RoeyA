@@ -5,10 +5,10 @@ import 'package:latlong2/latlong.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../core/services/ai_financial_advisor_service.dart';
 import '../../../data/models/transaction.dart' as model;
 import '../../../data/repositories/account_repository.dart';
 import '../../../data/repositories/transaction_repository.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/photo_attachment_widget.dart';
 
 class TransactionDetailScreen extends StatefulWidget {
@@ -23,10 +23,13 @@ class TransactionDetailScreen extends StatefulWidget {
 class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   final TransactionRepository _transactionRepo = TransactionRepository();
   final AccountRepository _accountRepo = AccountRepository();
+  final AiFinancialAdvisorService _aiAdvisor = AiFinancialAdvisorService.instance;
   
   model.Transaction? _transaction;
   String? _accountName;
   bool _isLoading = true;
+  String? _aiInsight;
+  bool _isLoadingAi = false;
 
   @override
   void initState() {
@@ -66,6 +69,12 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
       appBar: AppBar(
         title: Text(l10n.recentTransactions),
         actions: [
+          if (_aiAdvisor.isConfigured)
+            IconButton(
+              icon: Icon(_isLoadingAi ? Icons.hourglass_empty : Icons.auto_awesome_outlined),
+              tooltip: 'Ask AI',
+              onPressed: _isLoadingAi ? null : _generateAiInsight,
+            ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () async {
@@ -118,6 +127,12 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
             ),
             
             const SizedBox(height: 32),
+            
+            // AI Insight Card
+            if (_aiInsight != null) ...[
+              _buildAiInsightCard(l10n),
+              const SizedBox(height: 24),
+            ],
             
             // Details List
             _buildDetailRow(Icons.account_balance_wallet_outlined, l10n.accounts, _accountName ?? ''),
@@ -225,6 +240,89 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _generateAiInsight() async {
+    if (_transaction == null || !_aiAdvisor.isConfigured) return;
+    
+    setState(() {
+      _isLoadingAi = true;
+      _aiInsight = null;
+    });
+    
+    try {
+      final locale = Localizations.localeOf(context);
+      final language = locale.languageCode;
+      
+      final insight = await _aiAdvisor.generateTransactionInsight(
+        description: _transaction!.description ?? 'No description',
+        amount: _transaction!.amount,
+        category: _transaction!.category,
+        accountName: _accountName,
+        date: _transaction!.transactionDate,
+        type: _transaction!.type,
+        language: language,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _aiInsight = insight;
+          _isLoadingAi = false;
+        });
+      }
+    } catch (e) {
+      print('Error generating AI insight: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingAi = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate AI insight')),
+        );
+      }
+    }
+  }
+
+  Widget _buildAiInsightCard(AppLocalizations l10n) {
+    return Card(
+      elevation: 2,
+      color: AppColors.primary.withOpacity(0.05),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_awesome, size: 20, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'AI Insight',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18),
+                  onPressed: () {
+                    setState(() => _aiInsight = null);
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _aiInsight ?? '',
+              style: const TextStyle(fontSize: 14, height: 1.5),
+            ),
+          ],
+        ),
       ),
     );
   }

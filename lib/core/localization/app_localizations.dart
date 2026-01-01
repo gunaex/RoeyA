@@ -254,6 +254,30 @@ class AppLocalizations {
   String get noTemplates => translate('no_templates');
   String get templateSaved => translate('template_saved');
   
+  // AI Insights
+  String get askAi => translate('ask_ai');
+  String get aiInsight => translate('ai_insight');
+  String get generatingInsight => translate('generating_insight');
+  String get failedToGenerateInsight => translate('failed_to_generate_insight');
+  String get categoryInsight => translate('category_insight');
+  String get transactionInsight => translate('transaction_insight');
+  
+  // Scenario Simulation
+  String get scenarioSimulation => translate('scenario_simulation');
+  String get simulateScenario => translate('simulate_scenario');
+  String get currentIncome => translate('current_income');
+  String get currentExpense => translate('current_expense');
+  String get targetSaving => translate('target_saving');
+  String get reduceCategory => translate('reduce_category');
+  String get reductionPercentage => translate('reduction_percentage');
+  String get feasibility => translate('feasibility');
+  String get actionPlan => translate('action_plan');
+  
+  // Anomaly Detection
+  String get unusualTransactions => translate('unusual_transactions');
+  String get outlierTransactions => translate('outlier_transactions');
+  String get askAiAboutThis => translate('ask_ai_about_this');
+  
   // Helper method to get localized category name
   String getCategoryName(String categoryKey) {
     final key = 'cat_${categoryKey.toLowerCase().replaceAll(' ', '_').replaceAll('&', '').replaceAll('/', '_')}';
@@ -688,6 +712,30 @@ const Map<String, String> _thTH = {
   'select_template': 'เลือกเทมเพลต',
   'no_templates': 'ไม่มีเทมเพลต',
   'template_saved': 'บันทึกเทมเพลตสำเร็จ',
+  
+  // AI Insights
+  'ask_ai': 'ถาม AI',
+  'ai_insight': 'ข้อมูลเชิงลึกจาก AI',
+  'generating_insight': 'กำลังสร้างข้อมูลเชิงลึก...',
+  'failed_to_generate_insight': 'ไม่สามารถสร้างข้อมูลเชิงลึกได้',
+  'category_insight': 'ข้อมูลเชิงลึกหมวดหมู่',
+  'transaction_insight': 'ข้อมูลเชิงลึกรายการ',
+  
+  // Scenario Simulation
+  'scenario_simulation': 'จำลองสถานการณ์',
+  'simulate_scenario': 'จำลองสถานการณ์',
+  'current_income': 'รายได้ปัจจุบัน',
+  'current_expense': 'ค่าใช้จ่ายปัจจุบัน',
+  'target_saving': 'เป้าหมายการออม',
+  'reduce_category': 'ลดหมวดหมู่',
+  'reduction_percentage': 'เปอร์เซ็นต์การลด',
+  'feasibility': 'ความเป็นไปได้',
+  'action_plan': 'แผนการดำเนินงาน',
+  
+  // Anomaly Detection
+  'unusual_transactions': 'รายการผิดปกติ',
+  'outlier_transactions': 'รายการที่ผิดปกติ',
+  'ask_ai_about_this': 'ถาม AI เกี่ยวกับเรื่องนี้',
 };
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

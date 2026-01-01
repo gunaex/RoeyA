@@ -148,6 +148,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           _buildSettingTile(
             context,
+            title: l10n.scenarioSimulation,
+            subtitle: l10n.simulateScenario,
+            icon: Icons.trending_up_outlined,
+            onTap: () {
+              Navigator.pushNamed(context, AppConstants.routeScenarioSimulator);
+            },
+          ),
+
+          _buildSettingTile(
+            context,
             title: l10n.transactionMap,
             subtitle: l10n.viewLocationsOnMap,
             icon: Icons.map_outlined,

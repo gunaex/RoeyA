@@ -209,5 +209,247 @@ $expenseSummary
 ให้เฉพาะข้อความคำแนะนำส่วนบุคคลตามข้อมูลจริงของพวกเขา ไม่มี markdown ไม่มีหัวข้อ แค่ย่อหน้าข้อความธรรมดา
 ''';
   }
+
+  /// Generate AI insight for a specific category
+  Future<String?> generateCategoryInsight({
+    required String category,
+    required double total,
+    required Map<DateTime, double> history,
+    required String language,
+  }) async {
+    if (_model == null) return null;
+
+    try {
+      // Build history summary
+      final historyEntries = history.entries.toList()
+        ..sort((a, b) => a.key.compareTo(b.key));
+      final historySummary = historyEntries
+          .map((e) => '${e.key.year}-${e.key.month.toString().padLeft(2, '0')}: ${e.value.toStringAsFixed(2)} THB')
+          .join('\n');
+
+      final prompt = language == 'th' ? '''
+คุณเป็นที่ปรึกษาทางการเงิน AI วิเคราะห์ข้อมูลหมวดหมู่ "${category}":
+
+**ข้อมูลหมวดหมู่:**
+- หมวดหมู่: $category
+- ยอดรวมปัจจุบัน: ${total.toStringAsFixed(2)} THB
+- ประวัติ 3-6 เดือน:
+$historySummary
+
+**งานของคุณ:**
+วิเคราะห์แนวโน้มการใช้จ่ายในหมวดหมู่นี้และให้คำแนะนำเฉพาะเจาะจง:
+1. แนวโน้มการใช้จ่าย (เพิ่มขึ้น/ลดลง/คงที่)
+2. การเปรียบเทียบกับเดือนก่อนหน้า
+3. คำแนะนำในการจัดการหมวดหมู่นี้
+4. เคล็ดลับในการประหยัด (ถ้าเป็นค่าใช้จ่าย)
+
+ให้คำตอบสั้นๆ ประมาณ 100-150 คำ ไม่มี markdown แค่ข้อความธรรมดา
+''' : '''
+You are a financial advisor AI. Analyze the following category data:
+
+**Category Information:**
+- Category: $category
+- Current Total: ${total.toStringAsFixed(2)} THB
+- 3-6 Month History:
+$historySummary
+
+**Your Task:**
+Analyze spending trends for this category and provide specific insights:
+1. Spending trend (increasing/decreasing/stable)
+2. Comparison with previous months
+3. Recommendations for managing this category
+4. Savings tips (if expense category)
+
+Keep response concise, 100-150 words. No markdown, just plain text.
+''';
+
+      final content = [Content.text(prompt)];
+      final response = await _model!.generateContent(content);
+      return response.text?.trim();
+    } catch (e) {
+      print('🤖 AI Category Insight Error: $e');
+      return null;
+    }
+  }
+
+  /// Generate AI insight for a single transaction
+  Future<String?> generateTransactionInsight({
+    required String description,
+    required double amount,
+    required String? category,
+    required String? accountName,
+    required DateTime date,
+    required String type,
+    required String language,
+  }) async {
+    if (_model == null) return null;
+
+    try {
+      final prompt = language == 'th' ? '''
+คุณเป็นที่ปรึกษาทางการเงิน AI วิเคราะห์รายการธุรกรรมนี้:
+
+**รายการธุรกรรม:**
+- คำอธิบาย: $description
+- จำนวนเงิน: ${amount.toStringAsFixed(2)} THB
+- หมวดหมู่: ${category ?? 'ไม่ระบุ'}
+- บัญชี: ${accountName ?? 'ไม่ระบุ'}
+- วันที่: ${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}
+- ประเภท: ${type == 'income' ? 'รายได้' : 'ค่าใช้จ่าย'}
+
+**งานของคุณ:**
+วิเคราะห์รายการนี้และให้คำแนะนำ:
+1. รายการนี้เหมาะสมหรือไม่?
+2. มีวิธีประหยัดหรือเพิ่มมูลค่าได้หรือไม่?
+3. คำแนะนำสำหรับรายการคล้ายๆ กันในอนาคต
+
+ให้คำตอบสั้นๆ ประมาณ 80-120 คำ ไม่มี markdown แค่ข้อความธรรมดา
+''' : '''
+You are a financial advisor AI. Analyze this transaction:
+
+**Transaction Details:**
+- Description: $description
+- Amount: ${amount.toStringAsFixed(2)} THB
+- Category: ${category ?? 'Not specified'}
+- Account: ${accountName ?? 'Not specified'}
+- Date: ${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}
+- Type: ${type == 'income' ? 'Income' : 'Expense'}
+
+**Your Task:**
+Analyze this transaction and provide insights:
+1. Is this transaction reasonable?
+2. Any ways to save money or increase value?
+3. Recommendations for similar transactions in the future
+
+Keep response concise, 80-120 words. No markdown, just plain text.
+''';
+
+      final content = [Content.text(prompt)];
+      final response = await _model!.generateContent(content);
+      return response.text?.trim();
+    } catch (e) {
+      print('🤖 AI Transaction Insight Error: $e');
+      return null;
+    }
+  }
+
+  /// Simulate a financial scenario
+  Future<String?> simulateScenario({
+    required double currentIncome,
+    required double currentExpense,
+    required double? targetSaving,
+    required Map<String, double>? categoryReductions,
+    required String language,
+  }) async {
+    if (_model == null) return null;
+
+    try {
+      final reductionSummary = categoryReductions?.entries
+          .map((e) => '${e.key}: reduce by ${e.value.toStringAsFixed(1)}%')
+          .join(', ') ?? 'None';
+
+      final prompt = language == 'th' ? '''
+คุณเป็นที่ปรึกษาทางการเงิน AI จำลองสถานการณ์ทางการเงิน:
+
+**สถานการณ์ปัจจุบัน:**
+- รายได้รายเดือน: ${currentIncome.toStringAsFixed(2)} THB
+- ค่าใช้จ่ายรายเดือน: ${currentExpense.toStringAsFixed(2)} THB
+- ยอดคงเหลือสุทธิ: ${(currentIncome - currentExpense).toStringAsFixed(2)} THB
+
+**เป้าหมาย:**
+${targetSaving != null ? '- เป้าหมายการออม: ${targetSaving.toStringAsFixed(2)} THB/เดือน' : '- ไม่มีเป้าหมายการออมเฉพาะ'}
+${categoryReductions != null && categoryReductions.isNotEmpty ? '- ลดค่าใช้จ่ายตามหมวดหมู่:\n$reductionSummary' : ''}
+
+**งานของคุณ:**
+วิเคราะห์ความเป็นไปได้และสร้างแผนการ:
+1. สรุปความเป็นไปได้ (ทำได้/ทำได้แต่ยาก/ทำไม่ได้)
+2. แผนการปรับปรุงแบบทีละขั้นตอน:
+   - ปรับอะไรบ้าง
+   - ปรับเท่าไหร่
+   - ระยะเวลาเท่าไหร่
+3. คำแนะนำเพิ่มเติม
+
+ให้คำตอบเป็นข้อความโครงสร้างชัดเจน ประมาณ 200-250 คำ
+''' : '''
+You are a financial advisor AI. Simulate this financial scenario:
+
+**Current Situation:**
+- Monthly Income: ${currentIncome.toStringAsFixed(2)} THB
+- Monthly Expense: ${currentExpense.toStringAsFixed(2)} THB
+- Net Balance: ${(currentIncome - currentExpense).toStringAsFixed(2)} THB
+
+**Goals:**
+${targetSaving != null ? '- Target Saving: ${targetSaving.toStringAsFixed(2)} THB/month' : '- No specific saving target'}
+${categoryReductions != null && categoryReductions.isNotEmpty ? '- Category Reductions:\n$reductionSummary' : ''}
+
+**Your Task:**
+Analyze feasibility and create an action plan:
+1. Feasibility summary (Achievable/Challenging but possible/Not achievable)
+2. Step-by-step improvement plan:
+   - What to adjust
+   - How much to adjust
+   - Timeline
+3. Additional recommendations
+
+Provide structured response, 200-250 words.
+''';
+
+      final content = [Content.text(prompt)];
+      final response = await _model!.generateContent(content);
+      return response.text?.trim();
+    } catch (e) {
+      print('🤖 AI Scenario Simulation Error: $e');
+      return null;
+    }
+  }
+
+  /// Generate AI insight for outlier transactions
+  Future<String?> generateOutlierInsight({
+    required List<Map<String, dynamic>> outliers,
+    required String language,
+  }) async {
+    if (_model == null) return null;
+
+    try {
+      final outlierSummary = outliers
+          .take(10)
+          .map((tx) => '${tx['description'] ?? 'No description'}: ${tx['amount']} ${tx['currencyCode']} (${tx['category'] ?? 'No category'})')
+          .join('\n');
+
+      final prompt = language == 'th' ? '''
+คุณเป็นที่ปรึกษาทางการเงิน AI วิเคราะห์รายการผิดปกติ:
+
+**รายการผิดปกติ (${outliers.length} รายการ):**
+$outlierSummary
+
+**งานของคุณ:**
+วิเคราะห์และอธิบาย:
+1. เหตุใดรายการเหล่านี้จึงผิดปกติ
+2. มีสาเหตุที่เป็นไปได้อะไรบ้าง
+3. คำแนะนำในการจัดการ
+
+ให้คำตอบสั้นๆ ประมาณ 150-200 คำ
+''' : '''
+You are a financial advisor AI. Analyze these unusual transactions:
+
+**Unusual Transactions (${outliers.length} items):**
+$outlierSummary
+
+**Your Task:**
+Analyze and explain:
+1. Why these transactions are unusual
+2. Possible causes
+3. Recommendations for handling
+
+Keep response concise, 150-200 words.
+''';
+
+      final content = [Content.text(prompt)];
+      final response = await _model!.generateContent(content);
+      return response.text?.trim();
+    } catch (e) {
+      print('🤖 AI Outlier Insight Error: $e');
+      return null;
+    }
+  }
 }
 

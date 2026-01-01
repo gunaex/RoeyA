@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/services/ai_financial_advisor_service.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../data/repositories/transaction_repository.dart';
 import '../../../data/repositories/budget_repository.dart';
 import '../../../data/models/budget.dart';
+import '../../../data/models/transaction.dart' as model;
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -28,6 +30,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
   List<Map<String, dynamic>> _expenseCats = [];
   Map<String, Budget> _budgets = {}; // category -> Budget
   String? _aiSuggestions;
+  Map<String, String?> _categoryInsights = {}; // category -> insight
+  Map<String, bool> _loadingCategoryInsights = {}; // category -> loading state
+  List<model.Transaction> _outlierTransactions = [];
+  String? _outlierInsight;
+  bool _isLoadingOutlierInsight = false;
   late int _year;
   late int _month;
 
@@ -71,10 +78,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
         }
       }
       
+      // Load outlier transactions
+      final outliers = await _txRepo.getOutlierTransactions(_year, _month);
+      
       print('📊 Reports: Monthly summary for $_year-$_month: $monthly');
       print('📊 Reports: Income categories: $incomeCats');
       print('📊 Reports: Expense categories: $expenseCats');
       print('📊 Reports: Budgets: ${budgetsMap.length}');
+      print('📊 Reports: Outliers: ${outliers.length}');
       
       if (mounted) {
         setState(() {
@@ -82,6 +93,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           _incomeCats = incomeCats;
           _expenseCats = expenseCats;
           _budgets = budgetsMap;
+          _outlierTransactions = outliers;
           _isLoading = false;
         });
         
@@ -214,6 +226,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   _buildCategorySection(l10n, l10n.income, _incomeCats, AppColors.success, false),
                   const SizedBox(height: 16),
                   _buildCategorySection(l10n, l10n.expense, _expenseCats, AppColors.error, true),
+                  
+                  // Unusual Transactions Section
+                  if (_outlierTransactions.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildOutlierSection(l10n),
+                  ],
                   
                   // Empty state
                   if (!hasData && _incomeCats.isEmpty && _expenseCats.isEmpty)
@@ -777,6 +795,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
+                              if (_aiAdvisor.isConfigured && category != null)
+                                IconButton(
+                                  icon: Icon(
+                                    _loadingCategoryInsights[category] == true
+                                        ? Icons.hourglass_empty
+                                        : Icons.auto_awesome_outlined,
+                                    size: 18,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  tooltip: l10n.askAi,
+                                  onPressed: () => _generateCategoryInsight(category!, value, l10n),
+                                ),
                               Text(
                                 '$count ${l10n.transactions}',
                                 style: TextStyle(color: Colors.grey[500], fontSize: 12),
@@ -825,6 +856,42 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           minHeight: 6,
                         ),
                       ),
+                      
+                      // Category AI Insight
+                      if (category != null && _categoryInsights[category] != null) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.auto_awesome, size: 16, color: AppColors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _categoryInsights[category]!,
+                                  style: const TextStyle(fontSize: 12, height: 1.4),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 16),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () {
+                                  setState(() {
+                                    _categoryInsights.remove(category);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 );
@@ -833,6 +900,184 @@ class _ReportsScreenState extends State<ReportsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _generateCategoryInsight(String category, double total, AppLocalizations l10n) async {
+    if (!_aiAdvisor.isConfigured) return;
+    
+    setState(() {
+      _loadingCategoryInsights[category] = true;
+      _categoryInsights.remove(category);
+    });
+    
+    try {
+      final history = await _txRepo.getCategoryHistory(category, 6);
+      final locale = Localizations.localeOf(context);
+      final language = locale.languageCode;
+      
+      final insight = await _aiAdvisor.generateCategoryInsight(
+        category: category,
+        total: total,
+        history: history,
+        language: language,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _categoryInsights[category] = insight;
+          _loadingCategoryInsights[category] = false;
+        });
+      }
+    } catch (e) {
+      print('Error generating category insight: $e');
+      if (mounted) {
+        setState(() {
+          _loadingCategoryInsights[category] = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildOutlierSection(AppLocalizations l10n) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.unusualTransactions,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_aiAdvisor.isConfigured)
+                  TextButton.icon(
+                    icon: Icon(_isLoadingOutlierInsight ? Icons.hourglass_empty : Icons.auto_awesome_outlined),
+                    label: Text(l10n.askAiAboutThis),
+                    onPressed: _isLoadingOutlierInsight ? null : _generateOutlierInsight,
+                  ),
+              ],
+            ),
+            const Divider(height: 20),
+            
+            // Outlier Insight
+            if (_outlierInsight != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.auto_awesome, size: 16, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _outlierInsight!,
+                        style: const TextStyle(fontSize: 13, height: 1.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            
+            // Outlier List
+            ..._outlierTransactions.take(5).map((tx) {
+              final isIncome = tx.type == 'income';
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: isIncome ? Colors.green : Colors.red,
+                  child: Icon(
+                    isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                title: Text(tx.description ?? 'No description'),
+                subtitle: Text(
+                  '${l10n.getCategoryName(tx.category ?? '')} • ${CurrencyFormatter.format(tx.amount, tx.currencyCode)}',
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppConstants.routeTransactionDetail,
+                      arguments: tx.id,
+                    );
+                  },
+                ),
+              );
+            }),
+            
+            if (_outlierTransactions.length > 5)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  '... and ${_outlierTransactions.length - 5} more',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _generateOutlierInsight() async {
+    if (!_aiAdvisor.isConfigured || _outlierTransactions.isEmpty) return;
+    
+    setState(() {
+      _isLoadingOutlierInsight = true;
+      _outlierInsight = null;
+    });
+    
+    try {
+      final locale = Localizations.localeOf(context);
+      final language = locale.languageCode;
+      
+      // Build outlier data for AI service
+      final outlierData = _outlierTransactions.take(10).map((tx) => {
+        'description': tx.description ?? 'No description',
+        'amount': CurrencyFormatter.format(tx.amount, tx.currencyCode),
+        'currencyCode': tx.currencyCode,
+        'category': tx.category ?? 'No category',
+      }).toList();
+      
+      final insight = await _aiAdvisor.generateOutlierInsight(
+        outliers: outlierData,
+        language: language,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _outlierInsight = insight;
+          _isLoadingOutlierInsight = false;
+        });
+      }
+    } catch (e) {
+      print('Error generating outlier insight: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingOutlierInsight = false;
+        });
+      }
+    }
   }
 
   Widget _buildEmptyState(AppLocalizations l10n) {
