@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:roeyp/core/constants/app_constants.dart';
@@ -20,6 +21,7 @@ class RoeyPApp extends StatefulWidget {
 class _RoeyPAppState extends State<RoeyPApp> {
   String? _initialRoute;
   bool _isInitializing = true;
+  static const MethodChannel _shortcutChannel = MethodChannel('com.example/shortcut');
 
   @override
   void initState() {
@@ -36,30 +38,66 @@ class _RoeyPAppState extends State<RoeyPApp> {
     final accountRepo = AccountRepository();
     await accountRepo.createDefaultAccountsIfNeeded();
     
+    // Check for shortcut action
+    String? shortcutAction;
+    try {
+      final result = await _shortcutChannel.invokeMethod<String>('getInitialAction');
+      shortcutAction = result;
+    } catch (e) {
+      // Method channel not available or no shortcut action
+      print('Shortcut check: $e');
+    }
+    
     // Determine initial route
     final isFirstLaunch = await SecureStorageService.instance.isFirstLaunch();
     
+    if (shortcutAction != null && !isFirstLaunch) {
+      // Handle shortcut actions (only if app is already set up)
+      final hasConsented = await SecureStorageService.instance.hasConsented();
+      final hasPin = await SecureStorageService.instance.getPin();
+      
+      if (hasConsented && hasPin != null) {
+        // App is set up, handle shortcut
+        switch (shortcutAction) {
+          case 'quickScan':
+            _initialRoute = AppConstants.routeScanSlip;
+            break;
+          case 'quickAddExpense':
+            _initialRoute = AppConstants.routeManualEntry;
+            break;
+          default:
+            _initialRoute = await _getDefaultRoute(isFirstLaunch);
+        }
+      } else {
+        _initialRoute = await _getDefaultRoute(isFirstLaunch);
+      }
+    } else {
+      _initialRoute = await _getDefaultRoute(isFirstLaunch);
+    }
+    
+    setState(() {
+      _isInitializing = false;
+    });
+  }
+
+  Future<String> _getDefaultRoute(bool isFirstLaunch) async {
     if (isFirstLaunch) {
-      _initialRoute = AppConstants.routeWelcome;
+      return AppConstants.routeWelcome;
     } else {
       final hasConsented = await SecureStorageService.instance.hasConsented();
       final hasPin = await SecureStorageService.instance.getPin();
       final recoveryEmail = await SecureStorageService.instance.getRecoveryEmail();
       
       if (!hasConsented) {
-        _initialRoute = AppConstants.routeConsent;
+        return AppConstants.routeConsent;
       } else if (hasPin == null) {
-        _initialRoute = AppConstants.routeCreatePin;
+        return AppConstants.routeCreatePin;
       } else if (recoveryEmail == null) {
-        _initialRoute = AppConstants.routeRecoveryEmail;
+        return AppConstants.routeRecoveryEmail;
       } else {
-        _initialRoute = AppConstants.routePinLock;
+        return AppConstants.routePinLock;
       }
     }
-    
-    setState(() {
-      _isInitializing = false;
-    });
   }
 
   @override

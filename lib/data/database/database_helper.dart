@@ -120,6 +120,36 @@ class DatabaseHelper {
       )
     ''');
 
+    // Budgets table
+    await db.execute('''
+      CREATE TABLE budgets (
+        id TEXT PRIMARY KEY,
+        year INTEGER NOT NULL,
+        month INTEGER NOT NULL,
+        category TEXT,
+        amount REAL NOT NULL,
+        currency_code TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Transaction templates table
+    await db.execute('''
+      CREATE TABLE transaction_templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        category TEXT,
+        account_id TEXT,
+        amount REAL NOT NULL,
+        currency_code TEXT NOT NULL,
+        note TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (account_id) REFERENCES accounts (id)
+      )
+    ''');
+
     // Create indexes for better performance
     await db.execute('''
       CREATE INDEX idx_transactions_account_id 
@@ -135,11 +165,72 @@ class DatabaseHelper {
       CREATE INDEX idx_accounts_category 
       ON accounts(category)
     ''');
+
+    await db.execute('''
+      CREATE INDEX idx_budgets_year_month_category 
+      ON budgets(year, month, category)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_transactions_category 
+      ON transactions(category)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_transactions_description 
+      ON transactions(description)
+    ''');
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
-    // Handle database migrations here
-    // This will be used in future versions
+    // Migration from version 1 to 2: Add budgets and templates tables
+    if (oldVersion < 2) {
+      // Budgets table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS budgets (
+          id TEXT PRIMARY KEY,
+          year INTEGER NOT NULL,
+          month INTEGER NOT NULL,
+          category TEXT,
+          amount REAL NOT NULL,
+          currency_code TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      // Transaction templates table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS transaction_templates (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          type TEXT NOT NULL,
+          category TEXT,
+          account_id TEXT,
+          amount REAL NOT NULL,
+          currency_code TEXT NOT NULL,
+          note TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (account_id) REFERENCES accounts (id)
+        )
+      ''');
+
+      // Add indexes
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_budgets_year_month_category 
+        ON budgets(year, month, category)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_transactions_category 
+        ON transactions(category)
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_transactions_description 
+        ON transactions(description)
+      ''');
+    }
   }
 
   Future<void> close() async {

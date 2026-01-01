@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RoeyA</string>
+    <string name="shortcut_scan_label">Scan Slip</string>
+    <string name="shortcut_scan_long_label">Scan Transfer Slip</string>
+    <string name="shortcut_add_expense_label">Add Expense</string>
+    <string name="shortcut_add_expense_long_label">Add Expense Transaction</string>
+</resources>
+

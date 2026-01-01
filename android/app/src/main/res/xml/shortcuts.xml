@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="quick_scan"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_scan_label"
+        android:shortcutLongLabel="@string/shortcut_scan_long_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.example.roeyp"
+            android:targetClass="com.example.roeyp.MainActivity"
+            android:data="roeya://scan-slip" />
+    </shortcut>
+    
+    <shortcut
+        android:shortcutId="quick_add_expense"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_add_expense_label"
+        android:shortcutLongLabel="@string/shortcut_add_expense_long_label">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.example.roeyp"
+            android:targetClass="com.example.roeyp.MainActivity"
+            android:data="roeya://manual-entry?type=expense" />
+    </shortcut>
+</shortcuts>
+

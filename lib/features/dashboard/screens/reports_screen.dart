@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/ai_financial_advisor_service.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../data/repositories/transaction_repository.dart';
+import '../../../data/repositories/budget_repository.dart';
+import '../../../data/models/budget.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -16,6 +18,7 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> {
   final TransactionRepository _txRepo = TransactionRepository();
+  final BudgetRepository _budgetRepo = BudgetRepository();
   final AiFinancialAdvisorService _aiAdvisor = AiFinancialAdvisorService.instance;
   
   bool _isLoading = true;
@@ -23,6 +26,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Map<String, double> _monthly = {'income': 0, 'expense': 0};
   List<Map<String, dynamic>> _incomeCats = [];
   List<Map<String, dynamic>> _expenseCats = [];
+  Map<String, Budget> _budgets = {}; // category -> Budget
   String? _aiSuggestions;
   late int _year;
   late int _month;
@@ -58,15 +62,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final incomeCats = await _txRepo.getCategoryBreakdown('income', _year, _month);
       final expenseCats = await _txRepo.getCategoryBreakdown('expense', _year, _month);
       
+      // Load budgets for this month
+      final budgets = await _budgetRepo.getCategoryBudgets(_year, _month);
+      final budgetsMap = <String, Budget>{};
+      for (var budget in budgets) {
+        if (budget.category != null) {
+          budgetsMap[budget.category!] = budget;
+        }
+      }
+      
       print('📊 Reports: Monthly summary for $_year-$_month: $monthly');
       print('📊 Reports: Income categories: $incomeCats');
       print('📊 Reports: Expense categories: $expenseCats');
+      print('📊 Reports: Budgets: ${budgetsMap.length}');
       
       if (mounted) {
         setState(() {
           _monthly = monthly;
           _incomeCats = incomeCats;
           _expenseCats = expenseCats;
+          _budgets = budgetsMap;
           _isLoading = false;
         });
         
@@ -196,9 +211,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   ],
                   
                   // Category Breakdown Lists
-                  _buildCategorySection(l10n, l10n.income, _incomeCats, AppColors.success),
+                  _buildCategorySection(l10n, l10n.income, _incomeCats, AppColors.success, false),
                   const SizedBox(height: 16),
-                  _buildCategorySection(l10n, l10n.expense, _expenseCats, AppColors.error),
+                  _buildCategorySection(l10n, l10n.expense, _expenseCats, AppColors.error, true),
                   
                   // Empty state
                   if (!hasData && _incomeCats.isEmpty && _expenseCats.isEmpty)
@@ -632,7 +647,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Widget _buildCategorySection(AppLocalizations l10n, String title, List<Map<String, dynamic>> items, Color color) {
+  Widget _buildCategorySection(AppLocalizations l10n, String title, List<Map<String, dynamic>> items, Color color, bool showBudget) {
     final total = items.fold<double>(0, (sum, e) => sum + ((e['total'] as num?)?.toDouble() ?? 0));
     
     return Card(
@@ -646,7 +661,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               children: [
                 Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 Text(
-                  '฿${NumberFormat('#,##0.00').format(total)}',
+                  CurrencyFormatter.format(total, 'THB'),
                   style: TextStyle(color: color, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -666,13 +681,29 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ...items.asMap().entries.map((entry) {
                 final i = entry.key;
                 final e = entry.value;
+                final category = e['category']?.toString();
                 final value = (e['total'] as num?)?.toDouble() ?? 0;
                 final count = (e['count'] as num?)?.toInt() ?? 0;
                 final percentage = total > 0 ? (value / total * 100) : 0;
                 
+                // Budget information for expense categories
+                Budget? budget;
+                double budgetUsage = 0.0;
+                bool isOverBudget = false;
+                bool isWarning = false;
+                if (showBudget && category != null && _budgets.containsKey(category)) {
+                  budget = _budgets[category];
+                  if (budget != null && budget.amount > 0) {
+                    budgetUsage = (value / budget.amount).clamp(0.0, double.infinity);
+                    isOverBudget = budgetUsage > 1.0;
+                    isWarning = budgetUsage > 0.8;
+                  }
+                }
+                
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
@@ -686,23 +717,105 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              _getLocalizedCategory(e['category']?.toString(), l10n),
-                              style: const TextStyle(fontWeight: FontWeight.w500),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _getLocalizedCategory(category, l10n),
+                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                                if (budget != null) ...[
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${l10n.budget}: ${CurrencyFormatter.format(budget.amount, budget.currencyCode)}',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      if (isOverBudget)
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red[100],
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            l10n.overBudget,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.red[700],
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        )
+                                      else if (isWarning)
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange[100],
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            l10n.budgetWarning,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.orange[700],
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                          Text(
-                            '$count ${l10n.transactions}',
-                            style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '฿${NumberFormat('#,##0').format(value)}',
-                            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '$count ${l10n.transactions}',
+                                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                CurrencyFormatter.format(value, 'THB'),
+                                style: TextStyle(color: color, fontWeight: FontWeight.w600),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                       const SizedBox(height: 6),
+                      // Budget progress bar (for expense categories with budget)
+                      if (budget != null && budget.amount > 0) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: budgetUsage.clamp(0.0, 1.0),
+                            backgroundColor: Colors.grey[200],
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              isOverBudget ? Colors.red : (isWarning ? Colors.orange : Colors.green),
+                            ),
+                            minHeight: 8,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${l10n.budgetUsage}: ${(budgetUsage * 100).toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isOverBudget ? Colors.red : (isWarning ? Colors.orange : Colors.green),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+                      // Category percentage progress bar
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(

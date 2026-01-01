@@ -19,6 +19,8 @@ import 'package:roeyp/features/transactions/screens/slip_ocr_screen.dart';
 import 'package:roeyp/features/transactions/screens/transaction_detail_screen.dart';
 import 'package:roeyp/features/transactions/screens/transaction_mode_screen.dart';
 import 'package:roeyp/features/dashboard/screens/reports_screen.dart';
+import 'package:roeyp/features/budgets/screens/budgets_screen.dart';
+import 'package:roeyp/features/transactions/screens/search_transactions_screen.dart';
 
 class AppRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -90,6 +92,12 @@ class AppRoutes {
         return MaterialPageRoute(
           builder: (_) => TransactionDetailScreen(transactionId: id),
         );
+      
+      case AppConstants.routeBudgets:
+        return MaterialPageRoute(builder: (_) => const BudgetsScreen());
+      
+      case AppConstants.routeSearchTransactions:
+        return MaterialPageRoute(builder: (_) => const SearchTransactionsScreen());
       
       default:
         return MaterialPageRoute(

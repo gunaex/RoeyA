@@ -207,6 +207,53 @@ class AppLocalizations {
   String get scanSlipOcrDesc => translate('scan_slip_ocr_desc');
   String get manualEntryDesc => translate('manual_entry_desc');
   
+  // Budgets
+  String get budgets => translate('budgets');
+  String get budget => translate('budget');
+  String get setBudget => translate('set_budget');
+  String get editBudget => translate('edit_budget');
+  String get deleteBudget => translate('delete_budget');
+  String get monthlyBudget => translate('monthly_budget');
+  String get categoryBudget => translate('category_budget');
+  String get budgetAmount => translate('budget_amount');
+  String get selectMonth => translate('select_month');
+  String get budgetVsActual => translate('budget_vs_actual');
+  String get budgetExceeded => translate('budget_exceeded');
+  String get budgetWarning => translate('budget_warning');
+  String get budgetUsage => translate('budget_usage');
+  String get noBudgetSet => translate('no_budget_set');
+  String get overBudget => translate('over_budget');
+  String get withinBudget => translate('within_budget');
+  
+  // Search
+  String get search => translate('search');
+  String get searchTransactions => translate('search_transactions');
+  String get searchHint => translate('search_hint');
+  String get filters => translate('filters');
+  String get applyFilters => translate('apply_filters');
+  String get clearFilters => translate('clear_filters');
+  String get searchResults => translate('search_results');
+  String get noResults => translate('no_results');
+  String get dateRange => translate('date_range');
+  String get amountRange => translate('amount_range');
+  String get minAmount => translate('min_amount');
+  String get maxAmount => translate('max_amount');
+  String get fromDate => translate('from_date');
+  String get toDate => translate('to_date');
+  
+  // Templates
+  String get templates => translate('templates');
+  String get template => translate('template');
+  String get saveAsTemplate => translate('save_as_template');
+  String get useTemplate => translate('use_template');
+  String get templateName => translate('template_name');
+  String get createTemplate => translate('create_template');
+  String get editTemplate => translate('edit_template');
+  String get deleteTemplate => translate('delete_template');
+  String get selectTemplate => translate('select_template');
+  String get noTemplates => translate('no_templates');
+  String get templateSaved => translate('template_saved');
+  
   // Helper method to get localized category name
   String getCategoryName(String categoryKey) {
     final key = 'cat_${categoryKey.toLowerCase().replaceAll(' ', '_').replaceAll('&', '').replaceAll('/', '_')}';
@@ -594,6 +641,53 @@ const Map<String, String> _thTH = {
   'scan_slip_ocr': 'สแกนสลิป (OCR)',
   'scan_slip_ocr_desc': 'อ่านสลิปอัตโนมัติด้วย AI (ฟรี, ไม่ต้องใช้อินเทอร์เน็ต)',
   'manual_entry_desc': 'กรอกรายละเอียดธุรกรรมด้วยตนเอง',
+  
+  // Budgets
+  'budgets': 'งบประมาณ',
+  'budget': 'งบประมาณ',
+  'set_budget': 'ตั้งงบประมาณ',
+  'edit_budget': 'แก้ไขงบประมาณ',
+  'delete_budget': 'ลบงบประมาณ',
+  'monthly_budget': 'งบประมาณรายเดือน',
+  'category_budget': 'งบประมาณตามหมวดหมู่',
+  'budget_amount': 'จำนวนงบประมาณ',
+  'select_month': 'เลือกเดือน',
+  'budget_vs_actual': 'งบประมาณ vs จริง',
+  'budget_exceeded': 'เกินงบประมาณ',
+  'budget_warning': 'เตือนงบประมาณ',
+  'budget_usage': 'การใช้งบประมาณ',
+  'no_budget_set': 'ยังไม่ได้ตั้งงบประมาณ',
+  'over_budget': 'เกินงบประมาณ',
+  'within_budget': 'อยู่ในงบประมาณ',
+  
+  // Search
+  'search': 'ค้นหา',
+  'search_transactions': 'ค้นหารายการ',
+  'search_hint': 'ค้นหาตามคำอธิบาย, หมายเหตุ, หรือหมวดหมู่...',
+  'filters': 'ตัวกรอง',
+  'apply_filters': 'ใช้ตัวกรอง',
+  'clear_filters': 'ล้างตัวกรอง',
+  'search_results': 'ผลการค้นหา',
+  'no_results': 'ไม่พบผลลัพธ์',
+  'date_range': 'ช่วงวันที่',
+  'amount_range': 'ช่วงจำนวนเงิน',
+  'min_amount': 'จำนวนเงินขั้นต่ำ',
+  'max_amount': 'จำนวนเงินสูงสุด',
+  'from_date': 'จากวันที่',
+  'to_date': 'ถึงวันที่',
+  
+  // Templates
+  'templates': 'เทมเพลต',
+  'template': 'เทมเพลต',
+  'save_as_template': 'บันทึกเป็นเทมเพลต',
+  'use_template': 'ใช้เทมเพลต',
+  'template_name': 'ชื่อเทมเพลต',
+  'create_template': 'สร้างเทมเพลต',
+  'edit_template': 'แก้ไขเทมเพลต',
+  'delete_template': 'ลบเทมเพลต',
+  'select_template': 'เลือกเทมเพลต',
+  'no_templates': 'ไม่มีเทมเพลต',
+  'template_saved': 'บันทึกเทมเพลตสำเร็จ',
 };
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

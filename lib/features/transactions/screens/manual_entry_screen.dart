@@ -10,6 +10,8 @@ import '../../../data/models/photo_attachment.dart';
 import '../../../data/models/transaction.dart' as model;
 import '../../../data/repositories/account_repository.dart';
 import '../../../data/repositories/transaction_repository.dart';
+import '../../../data/repositories/template_repository.dart';
+import '../../../data/models/transaction_template.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/photo_attachment_widget.dart';
@@ -31,6 +33,7 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   
   final AccountRepository _accountRepo = AccountRepository();
   final TransactionRepository _transactionRepo = TransactionRepository();
+  final TemplateRepository _templateRepo = TemplateRepository();
   
   String _type = 'expense';
   String _currency = 'THB';
@@ -147,6 +150,13 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.manualEntry),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.bookmark_outline),
+            tooltip: l10n.useTemplate,
+            onPressed: _showTemplateSelector,
+          ),
+        ],
       ),
       body: _isLoadingAccounts 
         ? const Center(child: CircularProgressIndicator())
@@ -320,11 +330,123 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     }
   }
 
+  Future<void> _showTemplateSelector() async {
+    final l10n = AppLocalizations.of(context)!;
+    
+    try {
+      final templates = await _templateRepo.getTemplatesByType(_type);
+      
+      if (templates.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.noTemplates)),
+          );
+        }
+        return;
+      }
+      
+      if (mounted) {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) => Container(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.selectTemplate,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: templates.length,
+                    itemBuilder: (context, index) {
+                      final template = templates[index];
+                      return ListTile(
+                        leading: Icon(Icons.bookmark),
+                        title: Text(template.name),
+                        subtitle: Text(
+                          '${l10n.getCategoryName(template.category ?? '')} • ${template.amount.toStringAsFixed(2)} ${template.currencyCode}',
+                        ),
+                        trailing: Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _loadTemplate(template);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error loading templates: $e');
+    }
+  }
+
+  void _loadTemplate(TransactionTemplate template) {
+    setState(() {
+      _type = template.type;
+      _selectedCategory = template.category;
+      _selectedAccountId = template.accountId;
+      _amountController.text = template.amount.toStringAsFixed(2);
+      _noteController.text = template.note ?? '';
+      _currency = template.currencyCode;
+    });
+  }
+
   Future<void> _handleSave() async {
     final l10n = AppLocalizations.of(context)!;
     
     if (!_formKey.currentState!.validate()) return;
     if (_selectedAccountId == null) return;
+
+    // Show save options dialog for new transactions
+    if (widget.transactionId == null) {
+      final saveOption = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(l10n.save),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.save),
+                title: Text(l10n.save),
+                subtitle: Text('Save transaction only'),
+                onTap: () => Navigator.pop(context, 'save'),
+              ),
+              ListTile(
+                leading: Icon(Icons.bookmark),
+                title: Text(l10n.saveAsTemplate),
+                subtitle: Text('Save transaction and create template'),
+                onTap: () => Navigator.pop(context, 'save_template'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.cancel),
+            ),
+          ],
+        ),
+      );
+
+      if (saveOption == null) return;
+      
+      if (saveOption == 'save_template') {
+        await _saveAsTemplate(l10n);
+      }
+    }
 
     setState(() { _isLoading = true; });
 
@@ -369,6 +491,68 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
       }
     } finally {
       if (mounted) setState(() { _isLoading = false; });
+    }
+  }
+
+  Future<void> _saveAsTemplate(AppLocalizations l10n) async {
+    final nameController = TextEditingController(
+      text: _descriptionController.text.isNotEmpty 
+          ? _descriptionController.text 
+          : '${_type == 'income' ? l10n.income : l10n.expense} Template',
+    );
+    
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.saveAsTemplate),
+        content: TextField(
+          controller: nameController,
+          decoration: InputDecoration(
+            labelText: l10n.templateName,
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+    
+    if (result == true && nameController.text.isNotEmpty) {
+      try {
+        final amount = double.tryParse(_amountController.text) ?? 0.0;
+        final template = TransactionTemplate(
+          id: const Uuid().v4(),
+          name: nameController.text,
+          type: _type,
+          category: _selectedCategory,
+          accountId: _selectedAccountId,
+          amount: amount,
+          currencyCode: _currency,
+          note: _noteController.text.isNotEmpty ? _noteController.text : null,
+          createdAt: DateTime.now(),
+        );
+        
+        await _templateRepo.insertTemplate(template);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.templateSaved),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } catch (e) {
+        print('Error saving template: $e');
+      }
     }
   }
 }

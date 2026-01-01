@@ -161,4 +161,77 @@ class TransactionRepository {
     
     return maps.map((map) => model.Transaction.fromMap(map)).toList();
   }
+
+  /// Search transactions with multiple filters
+  Future<List<model.Transaction>> searchTransactions({
+    String? query,
+    String? category,
+    String? accountId,
+    DateTime? from,
+    DateTime? to,
+    double? minAmount,
+    double? maxAmount,
+    String? type, // 'income' or 'expense'
+  }) async {
+    final db = await _dbHelper.database;
+    
+    final List<String> whereConditions = ['is_deleted = 0'];
+    final List<dynamic> whereArgs = [];
+    
+    // Keyword search in description, note, or category
+    if (query != null && query.isNotEmpty) {
+      whereConditions.add('(description LIKE ? OR note LIKE ? OR category LIKE ?)');
+      final searchPattern = '%$query%';
+      whereArgs.addAll([searchPattern, searchPattern, searchPattern]);
+    }
+    
+    // Category filter
+    if (category != null && category.isNotEmpty) {
+      whereConditions.add('category = ?');
+      whereArgs.add(category);
+    }
+    
+    // Account filter
+    if (accountId != null && accountId.isNotEmpty) {
+      whereConditions.add('account_id = ?');
+      whereArgs.add(accountId);
+    }
+    
+    // Date range filter
+    if (from != null) {
+      whereConditions.add('transaction_date >= ?');
+      whereArgs.add(from.toIso8601String());
+    }
+    if (to != null) {
+      whereConditions.add('transaction_date <= ?');
+      whereArgs.add(to.toIso8601String());
+    }
+    
+    // Amount range filter
+    if (minAmount != null) {
+      whereConditions.add('amount >= ?');
+      whereArgs.add(minAmount);
+    }
+    if (maxAmount != null) {
+      whereConditions.add('amount <= ?');
+      whereArgs.add(maxAmount);
+    }
+    
+    // Type filter
+    if (type != null && type.isNotEmpty) {
+      whereConditions.add('type = ?');
+      whereArgs.add(type);
+    }
+    
+    final whereClause = whereConditions.join(' AND ');
+    
+    final maps = await db.query(
+      'transactions',
+      where: whereClause,
+      whereArgs: whereArgs.isEmpty ? null : whereArgs,
+      orderBy: 'transaction_date DESC, created_at DESC',
+    );
+    
+    return maps.map((map) => model.Transaction.fromMap(map)).toList();
+  }
 }

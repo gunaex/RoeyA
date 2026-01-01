@@ -138,6 +138,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           
           _buildSettingTile(
             context,
+            title: l10n.budgets,
+            subtitle: l10n.monthlyBudget,
+            icon: Icons.account_balance_wallet_outlined,
+            onTap: () {
+              Navigator.pushNamed(context, AppConstants.routeBudgets);
+            },
+          ),
+
+          _buildSettingTile(
+            context,
             title: l10n.transactionMap,
             subtitle: l10n.viewLocationsOnMap,
             icon: Icons.map_outlined,

@@ -5,7 +5,7 @@ class AppConstants {
   
   // Database
   static const String dbName = 'roeya.db';
-  static const int dbVersion = 1;
+  static const int dbVersion = 2; // Updated for budgets and templates tables
   
   // Security
   static const int pinLength = 4;
@@ -109,5 +109,7 @@ class AppConstants {
   static const String routeBulkImportOcr = '/bulk-import-ocr';
   static const String routeQrScanner = '/qr-scanner';
   static const String routeReports = '/reports';
+  static const String routeBudgets = '/budgets';
+  static const String routeSearchTransactions = '/search-transactions';
 }
 
