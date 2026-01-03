@@ -38,14 +38,11 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(35),
-                  child: SvgPicture.asset(
-                    'assets/images/logo.svg',
+                  child: Image.asset(
+                    'assets/images/logo.png',
                     width: 140,
                     height: 140,
                     fit: BoxFit.cover,
-                    placeholderBuilder: (context) => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
                   ),
                 ),
               ),

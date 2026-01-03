@@ -104,6 +104,9 @@ class DatabaseHelper {
         is_deleted INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         deleted_at TEXT,
+        is_subscription INTEGER NOT NULL DEFAULT 0,
+        frequency TEXT,
+        subscription_id TEXT,
         FOREIGN KEY (account_id) REFERENCES accounts (id)
       )
     ''');
@@ -150,6 +153,23 @@ class DatabaseHelper {
       )
     ''');
 
+    // Subscriptions table
+    await db.execute('''
+      CREATE TABLE subscriptions (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency_code TEXT NOT NULL,
+        frequency TEXT NOT NULL,
+        category TEXT,
+        icon TEXT,
+        color_value INTEGER NOT NULL,
+        next_billing_date TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
     // Create indexes for better performance
     await db.execute('''
       CREATE INDEX idx_transactions_account_id 
@@ -179,6 +199,11 @@ class DatabaseHelper {
     await db.execute('''
       CREATE INDEX idx_transactions_description 
       ON transactions(description)
+    ''');
+
+    await db.execute('''
+      CREATE INDEX idx_subscriptions_name 
+      ON subscriptions(name)
     ''');
   }
 
@@ -229,6 +254,36 @@ class DatabaseHelper {
       await db.execute('''
         CREATE INDEX IF NOT EXISTS idx_transactions_description 
         ON transactions(description)
+      ''');
+    }
+
+    // Migration from version 2 to 3: Add subscriptions table and transaction subscription fields
+    if (oldVersion < 3) {
+      // Add subscription columns to transactions table
+      await db.execute('ALTER TABLE transactions ADD COLUMN is_subscription INTEGER NOT NULL DEFAULT 0');
+      await db.execute('ALTER TABLE transactions ADD COLUMN frequency TEXT');
+      await db.execute('ALTER TABLE transactions ADD COLUMN subscription_id TEXT');
+      
+      // Create subscriptions table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS subscriptions (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          amount REAL NOT NULL,
+          currency_code TEXT NOT NULL,
+          frequency TEXT NOT NULL,
+          category TEXT,
+          icon TEXT,
+          color_value INTEGER NOT NULL,
+          next_billing_date TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE INDEX IF NOT EXISTS idx_subscriptions_name 
+        ON subscriptions(name)
       ''');
     }
   }

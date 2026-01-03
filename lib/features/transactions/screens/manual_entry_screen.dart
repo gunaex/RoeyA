@@ -46,6 +46,10 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
   bool _isLoadingAccounts = true;
   List<PhotoAttachment> _photos = [];
   bool _hasInitialized = false;
+  
+  // Subscription tracking
+  bool _isSubscription = false;
+  String? _frequency;
 
   List<String> get _categoryOptions {
     return _type == 'income' 
@@ -82,6 +86,8 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
           _photos = tx.photos ?? [];
           _currency = tx.currencyCode;
           _selectedCategory = tx.category;
+          _isSubscription = tx.isSubscription;
+          _frequency = tx.frequency;
         });
       }
     } catch (e) {
@@ -281,6 +287,89 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                         
                         const SizedBox(height: 24),
                         
+                        // Subscription Section
+                        Card(
+                          elevation: 0,
+                          color: AppColors.primaryLight.withOpacity(0.1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: AppColors.border),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.repeat, color: AppColors.primary),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        l10n.recurringTransaction,
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    Switch(
+                                      value: _isSubscription,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _isSubscription = value;
+                                          if (value) {
+                                            _frequency = _frequency ?? 'monthly';
+                                          } else {
+                                            _frequency = null;
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                if (_isSubscription) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    l10n.recurringFrequency,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SegmentedButton<String>(
+                                    segments: [
+                                      ButtonSegment(
+                                        value: 'weekly',
+                                        label: Text(l10n.weekly),
+                                        icon: const Icon(Icons.calendar_view_week),
+                                      ),
+                                      ButtonSegment(
+                                        value: 'monthly',
+                                        label: Text(l10n.monthly),
+                                        icon: const Icon(Icons.calendar_month),
+                                      ),
+                                      ButtonSegment(
+                                        value: 'yearly',
+                                        label: Text(l10n.yearly),
+                                        icon: const Icon(Icons.calendar_today),
+                                      ),
+                                    ],
+                                    selected: _frequency != null ? {_frequency!} : {},
+                                    emptySelectionAllowed: true,
+                                    onSelectionChanged: (Set<String> newSelection) {
+                                      setState(() {
+                                        _frequency = newSelection.isNotEmpty ? newSelection.first : null;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
                         // Photo Attachments
                         PhotoAttachmentWidget(
                           photos: _photos,
@@ -466,6 +555,8 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
         photos: _photos.isNotEmpty ? _photos : null,
         transactionDate: _selectedDate,
         createdAt: DateTime.now(),
+        isSubscription: _isSubscription,
+        frequency: _isSubscription ? _frequency : null,
       );
 
       if (widget.transactionId != null) {

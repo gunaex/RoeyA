@@ -20,6 +20,10 @@ class Transaction {
   final DateTime createdAt;
   final DateTime? deletedAt;
   
+  final bool isSubscription;
+  final String? frequency; // weekly, monthly, yearly
+  final String? subscriptionId;
+  
   Transaction({
     required this.id,
     required this.accountId,
@@ -38,6 +42,9 @@ class Transaction {
     this.isDeleted = false,
     required this.createdAt,
     this.deletedAt,
+    this.isSubscription = false,
+    this.frequency,
+    this.subscriptionId,
   });
   
   Map<String, dynamic> toMap() {
@@ -61,6 +68,9 @@ class Transaction {
       'is_deleted': isDeleted ? 1 : 0,
       'created_at': createdAt.toIso8601String(),
       'deleted_at': deletedAt?.toIso8601String(),
+      'is_subscription': isSubscription ? 1 : 0,
+      'frequency': frequency,
+      'subscription_id': subscriptionId,
     };
   }
   
@@ -93,6 +103,9 @@ class Transaction {
       deletedAt: map['deleted_at'] != null
           ? DateTime.parse(map['deleted_at'] as String)
           : null,
+      isSubscription: (map['is_subscription'] as int?) == 1,
+      frequency: map['frequency'] as String?,
+      subscriptionId: map['subscription_id'] as String?,
     );
   }
   
@@ -114,6 +127,9 @@ class Transaction {
     bool? isDeleted,
     DateTime? createdAt,
     DateTime? deletedAt,
+    bool? isSubscription,
+    String? frequency,
+    String? subscriptionId,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -133,6 +149,9 @@ class Transaction {
       isDeleted: isDeleted ?? this.isDeleted,
       createdAt: createdAt ?? this.createdAt,
       deletedAt: deletedAt ?? this.deletedAt,
+      isSubscription: isSubscription ?? this.isSubscription,
+      frequency: frequency ?? this.frequency,
+      subscriptionId: subscriptionId ?? this.subscriptionId,
     );
   }
 }

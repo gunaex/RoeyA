@@ -320,4 +320,36 @@ class TransactionRepository {
     
     return outliers;
   }
+
+  /// Get all subscription transactions
+  Future<List<model.Transaction>> getSubscriptionTransactions() async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'transactions',
+      where: 'is_deleted = 0 AND is_subscription = 1',
+      orderBy: 'amount DESC',
+    );
+    return maps.map((map) => model.Transaction.fromMap(map)).toList();
+  }
+
+  /// Get subscription summary (monthly total and yearly projection)
+  Future<Map<String, double>> getSubscriptionSummary() async {
+    final subscriptions = await getSubscriptionTransactions();
+    double monthlyTotal = 0;
+    
+    for (var sub in subscriptions) {
+      if (sub.frequency == 'monthly') {
+        monthlyTotal += sub.amount;
+      } else if (sub.frequency == 'yearly') {
+        monthlyTotal += sub.amount / 12;
+      } else if (sub.frequency == 'weekly') {
+        monthlyTotal += sub.amount * 4.33; // Average weeks per month
+      }
+    }
+    
+    return {
+      'monthly_total': monthlyTotal,
+      'yearly_projection': monthlyTotal * 12,
+    };
+  }
 }

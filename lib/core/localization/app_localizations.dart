@@ -331,6 +331,46 @@ class AppLocalizations {
   String get developerNoteDesc => translate('developer_note_desc');
   String get developerNoteMessage => translate('developer_note_message');
   
+  // Subscriptions
+  String get subscriptions => translate('subscriptions');
+  String get subscription => translate('subscription');
+  String get addSubscription => translate('add_subscription');
+  String get editSubscription => translate('edit_subscription');
+  String get deleteSubscription => translate('delete_subscription');
+  String get subscriptionName => translate('subscription_name');
+  String get recurringFrequency => translate('recurring_frequency');
+  String get weekly => translate('weekly');
+  String get monthly => translate('monthly');
+  String get yearly => translate('yearly');
+  String get nextBillingDate => translate('next_billing_date');
+  String get monthlyTotal => translate('monthly_total');
+  String get yearlyProjection => translate('yearly_projection');
+  String get markAsSubscription => translate('mark_as_subscription');
+  String get isThisRecurring => translate('is_this_recurring');
+  String get recurringTransaction => translate('recurring_transaction');
+  
+  // Visualization Styles
+  String get grid => translate('grid');
+  String get swarm => translate('swarm');
+  String get bubbles => translate('bubbles');
+  String get markTransactionsDesc => translate('mark_transactions_desc');
+  
+  // Financial Health
+  String get financialHealthScore => translate('financial_health_score');
+  String get excellent => translate('excellent');
+  String get good => translate('good');
+  String get needsAttention => translate('needs_attention');
+  String get accountDistribution => translate('account_distribution');
+  String get netCashFlow => translate('net_cash_flow');
+  String get surplus => translate('surplus');
+  String get deficit => translate('deficit');
+  
+  // Renewal Reminders
+  String get upcomingRenewals => translate('upcoming_renewals');
+  String get today => translate('today');
+  String get tomorrow => translate('tomorrow');
+  String get inDays => translate('in_days');
+
   // Helper method to get localized category name
   String getCategoryName(String categoryKey) {
     final key = 'cat_${categoryKey.toLowerCase().replaceAll(' ', '_').replaceAll('&', '').replaceAll('/', '_')}';
@@ -571,6 +611,46 @@ const Map<String, String> _enUS = {
   'reduction_percentage': 'Reduction Percentage',
   'feasibility': 'Feasibility',
   'action_plan': 'Action Plan',
+  
+  // Subscriptions
+  'subscriptions': 'Subscriptions',
+  'subscription': 'Subscription',
+  'add_subscription': 'Add Subscription',
+  'edit_subscription': 'Edit Subscription',
+  'delete_subscription': 'Delete Subscription',
+  'subscription_name': 'Subscription Name',
+  'recurring_frequency': 'Recurring Frequency',
+  'weekly': 'Weekly',
+  'monthly': 'Monthly',
+  'yearly': 'Yearly',
+  'next_billing_date': 'Next Billing Date',
+  'monthly_total': 'Monthly Total',
+  'yearly_projection': 'Yearly Projection',
+  'mark_as_subscription': 'Mark as Subscription',
+  'is_this_recurring': 'Is this a recurring transaction?',
+  'recurring_transaction': 'Recurring Transaction',
+  
+  // Visualization Styles
+  'grid': 'Grid',
+  'swarm': 'Swarm',
+  'bubbles': 'Bubbles',
+  'mark_transactions_desc': 'Mark your recurring transactions to track subscriptions',
+  
+  // Financial Health
+  'financial_health_score': 'Financial Health Score',
+  'excellent': 'Excellent',
+  'good': 'Good',
+  'needs_attention': 'Needs Attention',
+  'account_distribution': 'Account Distribution',
+  'net_cash_flow': 'Net Cash Flow',
+  'surplus': 'Surplus',
+  'deficit': 'Deficit',
+  
+  // Renewal Reminders
+  'upcoming_renewals': 'Upcoming Renewals',
+  'today': 'Today',
+  'tomorrow': 'Tomorrow',
+  'in_days': 'in {days} days',
 };
 
 // Thai
@@ -887,6 +967,46 @@ const Map<String, String> _thTH = {
   'developer_note': 'หมายเหตุจากนักพัฒนา',
   'developer_note_desc': 'เกี่ยวกับแอปนี้',
   'developer_note_message': 'แอปพลิเคชันนี้สำหรับคนที่ไม่ต้องการจ่ายค่าสมาชิกเหมือนผม ผมทำแจกเอง I Am Kanphong T.',
+  
+  // Subscriptions
+  'subscriptions': 'บริการสมาชิก',
+  'subscription': 'บริการสมาชิก',
+  'add_subscription': 'เพิ่มบริการสมาชิก',
+  'edit_subscription': 'แก้ไขบริการสมาชิก',
+  'delete_subscription': 'ลบบริการสมาชิก',
+  'subscription_name': 'ชื่อบริการ',
+  'recurring_frequency': 'ความถี่การชำระ',
+  'weekly': 'รายสัปดาห์',
+  'monthly': 'รายเดือน',
+  'yearly': 'รายปี',
+  'next_billing_date': 'วันชำระครั้งถัดไป',
+  'monthly_total': 'รวมรายเดือน',
+  'yearly_projection': 'ประมาณการรายปี',
+  'mark_as_subscription': 'ทำเครื่องหมายเป็นบริการสมาชิก',
+  'is_this_recurring': 'รายการนี้เป็นรายการที่เกิดซ้ำหรือไม่?',
+  'recurring_transaction': 'รายการที่เกิดซ้ำ',
+  
+  // Visualization Styles
+  'grid': 'ตาราง',
+  'swarm': 'กลุ่ม',
+  'bubbles': 'ฟองสบู่',
+  'mark_transactions_desc': 'ทำเครื่องหมายรายการที่เกิดซ้ำเพื่อติดตามการสมัครสมาชิก',
+  
+  // Financial Health
+  'financial_health_score': 'คะแนนสุขภาพการเงิน',
+  'excellent': 'ยอดเยี่ยม',
+  'good': 'ดี',
+  'needs_attention': 'ต้องปรับปรุง',
+  'account_distribution': 'การกระจายบัญชี',
+  'net_cash_flow': 'กระแสเงินสดสุทธิ',
+  'surplus': 'กำไร',
+  'deficit': 'ขาดทุน',
+  
+  // Renewal Reminders
+  'upcoming_renewals': 'การต่ออายุที่กำลังจะมาถึง',
+  'today': 'วันนี้',
+  'tomorrow': 'พรุ่งนี้',
+  'in_days': 'ในอีก {days} วัน',
 };
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

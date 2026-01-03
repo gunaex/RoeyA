@@ -5,7 +5,7 @@ class AppConstants {
   
   // Database
   static const String dbName = 'roeya.db';
-  static const int dbVersion = 2; // Updated for budgets and templates tables
+  static const int dbVersion = 3; // Updated for subscriptions table
   
   // Security
   static const int pinLength = 4;
@@ -112,5 +112,7 @@ class AppConstants {
   static const String routeBudgets = '/budgets';
   static const String routeSearchTransactions = '/search-transactions';
   static const String routeScenarioSimulator = '/scenario-simulator';
+  static const String routeSubscriptions = '/subscriptions';
+  static const String routeAddSubscription = '/add-subscription';
 }
 

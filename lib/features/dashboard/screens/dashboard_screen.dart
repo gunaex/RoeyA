@@ -9,6 +9,9 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../data/models/transaction.dart' as model;
 import '../../../data/repositories/account_repository.dart';
 import '../../../data/repositories/transaction_repository.dart';
+import '../../../shared/widgets/subscription_bento_grid.dart';
+import '../../../shared/widgets/renewal_reminder_widget.dart';
+import '../../../shared/widgets/financial_health_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -24,6 +27,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double _netWorth = 0.0;
   Map<String, double> _categorySummary = {};
   List<model.Transaction> _recentTransactions = [];
+  List<model.Transaction> _subscriptions = [];
+  double _subscriptionMonthlyTotal = 0.0;
+  double _subscriptionYearlyProjection = 0.0;
   bool _isLoading = true;
 
   @override
@@ -41,11 +47,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final netWorth = await _accountRepo.getNetWorth();
       final summary = await _accountRepo.getCategorySummary();
       final recent = await _transactionRepo.getRecentTransactions(limit: 5);
+      final subscriptions = await _transactionRepo.getSubscriptionTransactions();
+      final subSummary = await _transactionRepo.getSubscriptionSummary();
       
       setState(() {
         _netWorth = netWorth;
         _categorySummary = summary;
         _recentTransactions = recent;
+        _subscriptions = subscriptions;
+        _subscriptionMonthlyTotal = subSummary['monthly_total'] ?? 0.0;
+        _subscriptionYearlyProjection = subSummary['yearly_projection'] ?? 0.0;
         _isLoading = false;
       });
     } catch (e) {
@@ -136,9 +147,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       
                       const SizedBox(height: 24),
                       
+                      // Financial Health Infographic
+                      FinancialHealthWidget(
+                        categorySummary: _categorySummary,
+                        netWorth: _netWorth,
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Renewal Reminders
+                      if (_subscriptions.isNotEmpty) ...[
+                        RenewalReminderWidget(subscriptions: _subscriptions),
+                        const SizedBox(height: 24),
+                      ],
+                      
+                      // Subscriptions Section
+                      if (_subscriptions.isNotEmpty) ...[
+                        _buildSectionHeader(context, l10n.subscriptions, l10n.viewAll, () {
+                          Navigator.pushNamed(context, AppConstants.routeSearchTransactions);
+                        }),
+                        const SizedBox(height: 12),
+                        SubscriptionVisualizationWidget(
+                          subscriptions: _subscriptions,
+                          monthlyTotal: _subscriptionMonthlyTotal,
+                          yearlyProjection: _subscriptionYearlyProjection,
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                      
                       // Recent Transactions
                       _buildSectionHeader(context, l10n.recentTransactions, l10n.viewAll, () {
-                        // TODO: Navigate to transactions list
+                        Navigator.pushNamed(context, AppConstants.routeSearchTransactions);
                       }),
                       const SizedBox(height: 12),
                       _buildRecentTransactionsList(context, l10n),
@@ -257,6 +296,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _categorySummary[AppConstants.categoryAssets] ?? 0.0,
           Icons.account_balance_wallet_outlined,
           AppColors.assets,
+          () => Navigator.pushNamed(context, AppConstants.routeAccounts),
         ),
         const SizedBox(height: 8),
         _buildCategoryItem(
@@ -265,6 +305,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _categorySummary[AppConstants.categoryEquity] ?? 0.0,
           Icons.pie_chart_outline,
           AppColors.equity,
+          () => Navigator.pushNamed(context, AppConstants.routeAccounts),
         ),
         const SizedBox(height: 8),
         _buildCategoryItem(
@@ -273,6 +314,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _categorySummary[AppConstants.categoryRevenue] ?? 0.0,
           Icons.trending_up,
           AppColors.success,
+          () => Navigator.pushNamed(context, AppConstants.routeAccounts),
         ),
         const SizedBox(height: 8),
         _buildCategoryItem(
@@ -281,6 +323,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _categorySummary[AppConstants.categoryExpense] ?? 0.0,
           Icons.trending_down,
           AppColors.error,
+          () => Navigator.pushNamed(context, AppConstants.routeAccounts),
         ),
         const SizedBox(height: 8),
         _buildCategoryItem(
@@ -289,21 +332,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _categorySummary[AppConstants.categoryLiabilities] ?? 0.0,
           Icons.credit_card_outlined,
           AppColors.liabilities,
+          () => Navigator.pushNamed(context, AppConstants.routeAccounts),
         ),
       ],
     );
   }
 
-  Widget _buildCategoryItem(BuildContext context, String title, double amount, IconData icon, Color color) {
+  Widget _buildCategoryItem(BuildContext context, String title, double amount, IconData icon, Color color, VoidCallback onTap) {
     return Card(
       elevation: 0,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: AppColors.border.withOpacity(0.5)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
@@ -330,6 +377,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 
