@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -176,131 +177,119 @@ class _SubscriptionVisualizationWidgetState
 
   // Grid View (Bento Style - Staggered)
   Widget _buildGridView() {
+    // Logic: Sort from highest percentage (amount) to lowest for visual hierarchy
     final sortedSubs = List<model.Transaction>.from(widget.subscriptions)
-      ..sort((a, b) => b.amount.compareTo(a.amount));
-    
-    final topSub = sortedSubs.isNotEmpty ? sortedSubs[0] : null;
-    final mediumSubs = sortedSubs.length > 1 ? sortedSubs.sublist(1, math.min(3, sortedSubs.length)) : <model.Transaction>[];
-    final smallSubs = sortedSubs.length > 3 ? sortedSubs.sublist(3, math.min(6, sortedSubs.length)) : <model.Transaction>[];
+      ..sort((a, b) {
+        // Sort by amount descending
+        return b.amount.compareTo(a.amount);
+      });
 
-    return Column(
+    return StaggeredGrid.count(
       key: const ValueKey('grid'),
-      children: [
-        if (topSub != null)
-          SizedBox(
-            height: 180, // Increased from 160
-            width: double.infinity,
-            child: _buildGridCard(widget.subscriptions.indexOf(topSub), topSub, isLarge: true),
-          ),
-        if (mediumSubs.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Row(
-            children: mediumSubs.map((sub) => Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(right: sub == mediumSubs.last ? 0 : 12),
-                child: SizedBox(
-                   height: 160, // Increased from 140
-                   child: _buildGridCard(widget.subscriptions.indexOf(sub), sub),
-                ),
-              ),
-            )).toList(),
-          ),
-        ],
-        if (smallSubs.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Row(
-            children: smallSubs.map((sub) => Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(right: sub == smallSubs.last ? 0 : 12),
-                child: SizedBox(
-                  height: 140, // Increased from 120
-                  child: _buildGridCard(widget.subscriptions.indexOf(sub), sub, isCompact: true),
-                ),
-              ),
-            )).toList(),
-          ),
-        ],
-      ],
+      crossAxisCount: 4, // 4-column virtual grid
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      children: sortedSubs.map((item) {
+        // --- Weighted Dynamic Sizing Logic ---
+        final percentage = (item.amount / widget.monthlyTotal * 100).round();
+        
+        // If > 30%: Large square (2x2)
+        // If > 20%: Wide rectangle (2x1) or Square (User logic: 20-30% -> mainAxis=1 or 2. Prompt Code: cross=2, main=2 for >30, cross=2, main=1 for >20)
+        // We will follow the prompt's explicit logic block:
+        // int crossAxis = item.percentage > 30 ? 2 : 2;
+        // int mainAxis = item.percentage > 20 ? 2 : 1;
+        // if (item.percentage < 15) { crossAxis = 1; mainAxis = 1; }
+        
+        int crossAxis = percentage > 30 ? 2 : 2;
+        int mainAxis = percentage > 20 ? 2 : 1;
+        
+        // Handling very small items to be 1x1
+        if (percentage < 15) {
+          crossAxis = 1;
+          mainAxis = 1;
+        }
+
+        final isSmallBlock = crossAxis == 1 && mainAxis == 1;
+
+        return StaggeredGridTile.count(
+          crossAxisCellCount: crossAxis,
+          mainAxisCellCount: mainAxis,
+          child: _buildBentoCard(widget.subscriptions.indexOf(item), item, percentage, isSmall: isSmallBlock),
+        );
+      }).toList(),
     );
   }
 
-  Widget _buildGridCard(int index, model.Transaction sub, {bool isLarge = false, bool isCompact = false}) {
-    final yearlyAmount = _getYearlyAmount(sub);
-    final percentage = (sub.amount / widget.monthlyTotal * 100).round();
-    final icon = ServiceIcons.getIcon(sub.description ?? '');
+  // --- Bento Aesthetics & Responsive Content ---
+  Widget _buildBentoCard(int index, model.Transaction item, int percentage, {bool isSmall = false}) {
+    // Determine size context for typography
+    final iconEmoji = ServiceIcons.getIcon(item.description ?? '');
+    
+    // Reduce padding for small blocks to prevent overflow
+    final padding = isSmall ? 8.0 : 16.0;
 
-    return Card(
-      elevation: 0,
-      color: _getSubscriptionColor(index),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(isCompact ? 6 : 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(icon, style: TextStyle(fontSize: isLarge ? 28 : (isCompact ? 16 : 20))),
-                ),
-                if (percentage > 0)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '$percentage%',
-                      style: TextStyle(
-                          fontSize: isCompact ? 10 : 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-              ],
+    return Container(
+      padding: EdgeInsets.all(padding),
+      decoration: BoxDecoration(
+        color: _getSubscriptionColor(index),
+        borderRadius: BorderRadius.circular(24), // Rounded Corners
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(iconEmoji, style: TextStyle(fontSize: isSmall ? 18 : 22)),
+              // Hide badge if very small or just make it tiny
+              if (!isSmall || percentage > 5) 
+                _buildBadge("$percentage%", isSmall: isSmall),
+            ],
+          ),
+          
+          if (isSmall) 
+             // For small blocks, use a small gap instead of Spacer
+             const SizedBox(height: 4)
+          else 
+             const Spacer(),
+             
+          Flexible(
+            child: Text(
+              item.description ?? 'Subscription',
+              style: TextStyle(
+                fontSize: isSmall ? 11 : 13, 
+                fontWeight: FontWeight.w500, 
+                color: Colors.black54
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Flexible(
-                    child: Text(
-                      sub.description ?? 'Subscription',
-                      style: TextStyle(
-                          fontSize: isLarge ? 18 : (isCompact ? 12 : 14), fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      CurrencyFormatter.format(sub.amount, sub.currencyCode),
-                      style: TextStyle(
-                          fontSize: isLarge ? 24 : (isCompact ? 14 : 18), fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  if (!isCompact)
-                    Text(
-                      '~${CurrencyFormatter.format(yearlyAmount / 1000, sub.currencyCode)}k/yr',
-                      style:
-                          TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                    ),
-                ],
+          ),
+          
+          // Responsive Text to prevent overflow
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                CurrencyFormatter.format(item.amount, item.currencyCode),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildBadge(String text, {bool isSmall = false}) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isSmall ? 4 : 8, vertical: isSmall ? 2 : 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(text, style: TextStyle(fontSize: isSmall ? 8 : 10, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -454,12 +443,7 @@ class _SubscriptionVisualizationWidgetState
     return colors[index % colors.length];
   }
 
-  double _getYearlyAmount(model.Transaction sub) {
-    if (sub.frequency == 'monthly') return sub.amount * 12;
-    if (sub.frequency == 'yearly') return sub.amount;
-    if (sub.frequency == 'weekly') return sub.amount * 52;
-    return sub.amount * 12;
-  }
+
 }
 
 // Swarm Painter for elegant visualization

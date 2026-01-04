@@ -78,6 +78,7 @@ dependencies:
   
   # Charts for BI Reports
   fl_chart: ^0.68.0
+  flutter_staggered_grid_view: ^0.7.0
 
 dev_dependencies:
   flutter_test:
